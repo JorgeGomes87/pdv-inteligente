@@ -6,6 +6,8 @@ const app = express();
 app.use(express.json());
 app.use(cors());
 
+const path = require('path');
+
 // Rota para cadastrar novo produto
 app.post('/api/produtos', async (req, res) => {
     const { nome, preco, estoque } = req.body;
