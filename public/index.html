@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PDV Inteligente - Distribuidora</title>
+    <style>
+        :root { --primary: #2c3e50; --success: #27ae60; --danger: #c0392b; }
+        body { font-family: sans-serif; display: grid; grid-template-columns: 1fr 350px; gap: 20px; padding: 20px; background: #f4f4f4; }
+        .caixa-principal { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        .resumo-venda { background: var(--primary); color: white; padding: 20px; border-radius: 8px; }
+        input, button { padding: 10px; font-size: 1.1rem; margin-bottom: 10px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { border-bottom: 1px solid #ddd; padding: 10px; text-align: left; }
+        .total-destaque { font-size: 2rem; color: #f1c40f; font-weight: bold; }
+        .btn-vender { width: 100%; background: var(--success); color: white; border: none; cursor: pointer; padding: 15px; font-weight: bold; }
+    </style>
+</head>
+<body>
+
+    <div class="caixa-principal">
+        <h2>🛒 Novo Pedido</h2>
+        <div style="display: flex; gap: 10px;">
+            <input type="text" id="inputProduto" placeholder="Nome da Bebida ou Código" style="flex: 2;">
+            <input type="number" id="inputQtd" value="1" style="width: 80px;">
+            <button onclick="adicionarItem()" style="background: var(--primary); color: white; border: none; cursor: pointer;">Adicionar</button>
+        </div>
+
+        <table id="tabelaItens">
+            <thead>
+                <tr>
+                    <th>Item</th>
+                    <th>Qtd</th>
+                    <th>Preço Un.</th>
+                    <th>Subtotal</th>
+                    <th>Ação</th>
+                </tr>
+            </thead>
+            <tbody>
+                </tbody>
+        </table>
+    </div>
+
+    <div style="display: flex; gap: 10px; position: relative;">
+    <input type="text" id="inputProduto" list="listaProdutos" placeholder="Digite o nome da bebida..." style="flex: 2;" oninput="carregarSugestoes()">
+    <datalist id="listaProdutos">
+        </datalist>
+    <input type="number" id="inputQtd" value="1" style="width: 80px;">
+    <button onclick="adicionarItem()" style="background: var(--primary); color: white; border: none; cursor: pointer;">Adicionar (Enter)</button>
+</div>
+
+    <div class="resumo-venda">
+    <h3>Resumo</h3>
+    <p>Total da Venda:</p>
+    <div class="total-destaque">R$ <span id="valorTotal">0,00</span></div>
+    
+    <br>
+    <label>Forma de Pagamento:</label>
+    <div class="metodos-pagamento">
+        <button class="btn-pgto" onclick="setPagamento('Pix', this)">📱 Pix</button>
+        <button class="btn-pgto" onclick="setPagamento('Dinheiro', this)">💵 Dinheiro</button>
+        <button class="btn-pgto" onclick="setPagamento('Débito', this)">💳 Débito</button>
+        <button class="btn-pgto" onclick="setPagamento('Crédito', this)">💳 Crédito</button>
+    </div>
+    
+    <input type="hidden" id="formaSelecionada" value="">
+
+    <div id="secaoTroco" style="display: none; margin-top: 15px; background: rgba(255,255,255,0.1); padding: 10px; border-radius: 5px;">
+        <label>Valor Recebido:</label>
+        <input type="number" id="valorRecebido" placeholder="0,00" oninput="calcularTroco()" style="width: 80%; color: black;">
+        <p>Troco: <span id="trocoResultado" style="font-weight: bold; color: #f1c40f;">R$ 0,00</span></p>
+    </div>
+
+    <br>
+    <button class="btn-vender" onclick="finalizarVenda()">FINALIZAR (F2)</button>
+</div>
+
+   
+    <script>
+
+let produtosDoBanco = [];
+
+// Carrega os produtos assim que a página abre
+window.onload = async () => {
+    const response = await fetch('http://localhost:3000/api/produtos');
+    produtosDoBanco = await response.json();
+    popularSugestoes();
+};
+
+function popularSugestoes() {
+    const datalist = document.getElementById('listaProdutos');
+    datalist.innerHTML = ''; // Limpa antes de carregar
+    
+    produtosDoBanco.forEach(p => {
+        const option = document.createElement('option');
+        option.value = p.nome;
+        datalist.appendChild(option);
+    });
+}
+
+async function adicionarItem() {
+    const busca = document.getElementById('inputProduto').value;
+    const qtd = parseInt(document.getElementById('inputQtd').value) || 1;
+    
+    // Procura o produto exato na lista que já carregamos
+    const produto = produtosDoBanco.find(p => p.nome.toLowerCase() === busca.toLowerCase());
+
+    if (produto) {
+        if (produto.estoque < qtd) {
+            alert(`Estoque insuficiente! Você só tem ${produto.estoque} unidades.`);
+            return;
+        }
+
+        const subtotal = produto.preco * qtd;
+        carrinho.push({ 
+            id: produto.id, 
+            nome: produto.nome, 
+            preco: produto.preco, 
+            qtd, 
+            subtotal 
+        });
+        
+        atualizarInterface();
+        document.getElementById('inputProduto').value = '';
+        document.getElementById('inputProduto').focus();
+    } else {
+        alert("Selecione um produto da lista!");
+    }
+}
+
+
+
+
+
+        let carrinho = [];
+        let total = 0;
+
+        // Simulação de banco de dados local para teste rápido
+        const buscarProduto = (nome) => {
+            // Aqui depois faremos o fetch() para o backend
+            return { nome: nome, preco: 5.50 }; 
+        }
+        
+        function setPagamento(metodo, elemento) {
+    formaPagamento = metodo;
+    
+    // Mostra seção de troco apenas se for Dinheiro
+    const secao = document.getElementById('secaoTroco');
+    if (metodo === 'Dinheiro') {
+        secao.style.display = 'block';
+        document.getElementById('valorRecebido').focus();
+    } else {
+        secao.style.display = 'none';
+    }
+
+    // Estilização dos botões
+    document.querySelectorAll('.btn-pgto').forEach(btn => btn.classList.remove('ativo'));
+    elemento.classList.add('ativo');
+}
+
+function calcularTroco() {
+    const recebido = parseFloat(document.getElementById('valorRecebido').value) || 0;
+    const troco = recebido - total;
+    const displayTroco = document.getElementById('trocoResultado');
+
+    if (recebido > 0 && troco >= 0) {
+        displayTroco.innerText = `R$ ${troco.toFixed(2)}`;
+        displayTroco.style.color = "#27ae60"; // Verde se estiver ok
+    } else {
+        displayTroco.innerText = `R$ 0,00`;
+        displayTroco.style.color = "#f1c40f";
+    }
+}
+       async function adicionarItem() {
+    const busca = document.getElementById('inputProduto').value;
+    const qtd = parseInt(document.getElementById('inputQtd').value);
+    
+    // Busca no banco de dados
+    const response = await fetch('http://localhost:3000/api/produtos');
+    const produtos = await response.json();
+    
+    // Procura o produto pelo nome
+    const produtoEncontrado = produtos.find(p => p.nome.toLowerCase().includes(busca.toLowerCase()));
+
+    if (produtoEncontrado) {
+        const subtotal = produtoEncontrado.preco * qtd;
+        carrinho.push({ 
+            id: produtoEncontrado.id, 
+            nome: produtoEncontrado.nome, 
+            preco: produtoEncontrado.preco, 
+            qtd, 
+            subtotal 
+        });
+        atualizarInterface();
+        document.getElementById('inputProduto').value = '';
+        document.getElementById('inputProduto').focus();
+    } else {
+        alert("Produto não encontrado no estoque!");
+    }
+}
+
+       function atualizarInterface() {
+    const tbody = document.querySelector('#tabelaItens tbody');
+    tbody.innerHTML = '';
+    total = 0;
+
+    carrinho.forEach((item, index) => {
+        total += item.subtotal;
+        tbody.innerHTML += `
+            <tr>
+                <td>${item.nome}</td>
+                <td>${item.qtd}</td>
+                <td>R$ ${item.preco.toFixed(2)}</td>
+                <td>R$ ${item.subtotal.toFixed(2)}</td>
+                <td>
+                    <button onclick="removerItem(${index})" style="background:none; border:none; color:var(--danger); cursor:pointer; font-weight:bold;">
+                        [ X ]
+                    </button>
+                </td>
+            </tr>
+        `;
+    });
+
+    document.getElementById('valorTotal').innerText = total.toFixed(2);
+    // Se mudar o total, recalcula o troco automaticamente
+    if(formaPagamento === 'Dinheiro') calcularTroco();
+}
+
+function removerItem(index) {
+    // Remove 1 elemento na posição 'index'
+    carrinho.splice(index, 1);
+    atualizarInterface();
+}
+
+      function finalizarVenda() {
+    if (carrinho.length === 0) return alert("Carrinho vazio!");
+    if (!formaPagamento) return alert("Selecione o pagamento!");
+
+    let recebido = 0;
+    let troco = 0;
+
+    if (formaPagamento === 'Dinheiro') {
+        recebido = parseFloat(document.getElementById('valorRecebido').value) || 0;
+        if (recebido < total) return alert("Valor insuficiente!");
+        troco = recebido - total;
+    }
+
+    // --- GERANDO O TEXTO DO RECIBO ---
+    const cabecalho = "==== É A BOA DISTRIBUIDORA ====\n";
+    const dataVenda = `Data: ${new Date().toLocaleString()}\n`;
+    const divisor = "----------------------------------\n";
+    let itensTexto = "PRODUTO           QTD    SUBTOTAL\n";
+
+    carrinho.forEach(item => {
+        // Formatação simples para alinhar colunas
+        const nomeCurto = item.nome.substring(0, 15).padEnd(16, " ");
+        const qtdStr = item.qtd.toString().padEnd(6, " ");
+        itensTexto += `${nomeCurto} ${qtdStr} R$ ${item.subtotal.toFixed(2)}\n`;
+    });
+
+    const rodape = `\nTOTAL: R$ ${total.toFixed(2)}\n` +
+                   `PAGAMENTO: ${formaPagamento}\n` +
+                   (formaPagamento === 'Dinheiro' ? `RECEBIDO: R$ ${recebido.toFixed(2)}\nTROCO: R$ ${troco.toFixed(2)}\n` : "") +
+                   "\n==================================\n" +
+                   "OBRIGADO PELA PREFERENCIA!";
+
+    const cupomCompleto = cabecalho + dataVenda + divisor + itensTexto + divisor + rodape;
+
+    // Exibe o recibo na tela (opcional)
+    document.getElementById('textoRecibo').innerText = cupomCompleto;
+    document.getElementById('areaRecibo').style.display = 'block';
+
+    alert("Venda registrada!");
+
+    // Dentro da função finalizarVenda, logo após o alert:
+fetch('http://localhost:3000/api/vendas', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+        total: total,
+        pagamento: formaPagamento,
+        itens: carrinho
+    })
+})
+.then(res => res.json())
+.then(dados => console.log("Salvo no banco:", dados))
+.catch(err => console.error("Erro ao salvar:", err));
+    
+     
+}
+
+function copiarRecibo() {
+    const texto = document.getElementById('textoRecibo').innerText;
+    navigator.clipboard.writeText(texto).then(() => {
+        alert("Cupom copiado! Agora é só colar no WhatsApp do cliente.");
+    });
+}
+function resetarPDV() {
+    carrinho = [];
+    formaPagamento = "";
+    total = 0;
+    document.getElementById('valorRecebido').value = '';
+    document.getElementById('secaoTroco').style.display = 'none';
+    document.querySelectorAll('.btn-pgto').forEach(btn => btn.classList.remove('ativo'));
+    atualizarInterface();
+}
+        
+
+        // Atalho de teclado: F2 finaliza
+        window.addEventListener('keydown', (e) => {
+            if(e.key === 'F2') finalizarVenda();
+        });
+    </script>
+
+    <div id="areaRecibo" style="display: none;">
+    <pre id="textoRecibo" style="font-family: monospace; background: white; padding: 10px;"></pre>
+    <button onclick="copiarRecibo()" style="background: #25d366; color: white; border: none; padding: 10px; width: 100%; cursor: pointer;">
+        Copiado para WhatsApp 📱
+    </button>
+</div>
+</body>
+</html>

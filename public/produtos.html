@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Cadastro de Estoque - PDV</title>
+    <style>
+        body { font-family: sans-serif; padding: 20px; background: #ecf0f1; }
+        .card { background: white; padding: 20px; border-radius: 8px; max-width: 500px; margin: auto; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        input { width: 100%; padding: 10px; margin: 10px 0; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box; }
+        button { width: 100%; padding: 12px; background: #2980b9; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; }
+        button:hover { background: #3498db; }
+        .voltar { display: block; text-align: center; margin-top: 15px; color: #7f8c8d; text-decoration: none; }
+    </style>
+</head>
+<body>
+
+    <div class="card">
+        <h2>📦 Cadastrar Bebida</h2>
+        <input type="text" id="nome" placeholder="Ex: Cerveja Skol Latão 473ml">
+        <input type="number" id="preco" step="0.01" placeholder="Preço de Venda (Ex: 5.50)">
+        <input type="number" id="estoque" placeholder="Quantidade em Estoque">
+        
+        <button onclick="salvarProduto()">CADASTRAR PRODUTO</button>
+        <a href="index.html" class="voltar">← Voltar para o PDV</a>
+    </div>
+
+    <script>
+        async function salvarProduto() {
+            const produto = {
+                nome: document.getElementById('nome').value,
+                preco: parseFloat(document.getElementById('preco').value),
+                estoque: parseInt(document.getElementById('estoque').value)
+            };
+
+            if(!produto.nome || !produto.preco) return alert("Preencha os campos!");
+
+            const response = await fetch('http://localhost:3000/api/produtos', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(produto)
+            });
+
+            if(response.ok) {
+                alert("Produto salvo com sucesso!");
+                location.reload(); // Limpa os campos
+            }
+        }
+    </script>
+</body>
+</html>

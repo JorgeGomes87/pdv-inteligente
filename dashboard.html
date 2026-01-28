@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Dashboard - LevelUp Distribuidora</title>
+    <style>
+        body { font-family: sans-serif; background: #f0f2f5; display: flex; flex-direction: column; align-items: center; padding: 20px; }
+        .grid-cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; width: 100%; max-width: 900px; }
+        .card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); text-align: center; }
+        .card h3 { color: #7f8c8d; margin-bottom: 10px; font-size: 0.9rem; text-transform: uppercase; }
+        .card p { font-size: 1.8rem; font-weight: bold; margin: 0; color: #2c3e50; }
+        .destaque-verde { color: #27ae60 !important; }
+    </style>
+</head>
+<body>
+
+    <h1>Resumo da Distribuidora</h1>
+    
+    <div class="grid-cards">
+        <div class="card">
+            <h3>Faturamento Hoje</h3>
+            <p class="destaque-verde">R$ <span id="faturamento">0,00</span></p>
+        </div>
+        
+        <div class="card">
+            <h3>Produto Campeão (Hoje)</h3>
+            <p id="campeao">---</p>
+            <small id="campeaoQtd">0 unidades</small>
+        </div>
+
+        <div class="card">
+            <h3>Lucro Estimado</h3>
+            <p style="color: #2980b9;">R$ <span id="lucro">0,00</span></p>
+        </div>
+    </div>
+
+    <script>
+        async function carregarDados() {
+            const res = await fetch('http://localhost:3000/api/relatorios');
+            const dados = await res.json();
+            
+            document.getElementById('faturamento').innerText = dados.faturamentoHoje.toFixed(2);
+            document.getElementById('campeao').innerText = dados.produtoEstrela;
+            document.getElementById('campeaoQtd').innerText = dados.qtdEstrela + " unidades";
+        }
+
+        carregarDados();
+        // Atualiza a cada 1 minuto
+        setInterval(carregarDados, 60000);
+    </script>
+</body>
+</html>
