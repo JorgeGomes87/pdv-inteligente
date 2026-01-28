@@ -1,0 +1,23 @@
+# 📦 PDV Inteligente - Distribuidora de Bebidas
+
+Este é um sistema de Ponto de Venda (PDV) desenvolvido em **JavaScript** para rodar localmente, focado na agilidade de atendimento e controle de estoque de uma distribuidora.
+
+
+
+## 🚀 Funcionalidades
+- **Venda Rápida:** Interface otimizada para uso de teclado (Atalho F2 para finalizar).
+- **Busca Inteligente:** Autocomplete de produtos conforme você digita.
+- **Controle de Pagamento:** Suporte para Pix, Cartão e Dinheiro com **cálculo automático de troco**.
+- **Gestão de Estoque:** Integração com banco de dados **SQLite** para baixa automática de produtos.
+- **Relatórios:** Painel de dashboard com faturamento diário e produto campeão de vendas.
+- **Recibo Digital:** Geração de cupom em formato texto para impressão ou envio via WhatsApp.
+
+## 🛠️ Tecnologias Utilizadas
+- **Frontend:** HTML5, CSS3, JavaScript (Vanilla)
+- **Backend:** Node.js, Express.js
+- **Banco de Dados:** SQLite (via biblioteca `sqlite3`)
+
+## 📋 Como rodar o projeto
+1. **Clone o repositório:**
+   ```bash
+   git clone [https://github.com/SEU_USUARIO/SEU_REPOSITORIO.git](https://github.com/SEU_USUARIO/SEU_REPOSITORIO.git)
