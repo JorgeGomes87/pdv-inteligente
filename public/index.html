@@ -78,6 +78,19 @@
    
     <script>
 
+
+function mostrarAvisoPromo(mensagem) {
+    const alerta = document.createElement('div');
+    alerta.className = 'alerta-promo';
+    alerta.innerHTML = `🎉 PROMOÇÃO ATIVA: ${mensagem}`;
+    document.body.appendChild(alerta);
+
+    setTimeout(() => {
+        alerta.style.opacity = '0';
+        setTimeout(() => alerta.remove(), 500);
+    }, 3000);
+}
+
 let produtosDoBanco = [];
 
 // Carrega os produtos assim que a página abre
@@ -98,24 +111,45 @@ function popularSugestoes() {
     });
 }
 
+function calcularPrecoPromocional(nome, qtd, precoOriginal) {
+    const nomeMinusculo = nome.toLowerCase();
+
+    // Promoção Heineken: de 9.99 por 7.99 (independente da qtd)
+    if (nomeMinusculo.includes("heineken")) {
+        return 7.99;
+    }
+
+    // Promoção 2 por 10.00 (sai 5.00 cada) para Antarctica, Brahma e Império
+    const marcasPromo = ["antarctica", "brahma", "imperio"];
+    const ehCervejaPromo = marcasPromo.some(marca => nomeMinusculo.includes(marca));
+
+    if (ehCervejaPromo && qtd >= 2) {
+        return 5.00; // Preço unitário na promoção
+    }
+
+    return precoOriginal;
+}
+
 async function adicionarItem() {
     const busca = document.getElementById('inputProduto').value;
     const qtd = parseInt(document.getElementById('inputQtd').value) || 1;
     
-    // Procura o produto exato na lista que já carregamos
     const produto = produtosDoBanco.find(p => p.nome.toLowerCase() === busca.toLowerCase());
 
     if (produto) {
-        if (produto.estoque < qtd) {
-            alert(`Estoque insuficiente! Você só tem ${produto.estoque} unidades.`);
-            return;
+        const precoAplicado = calcularPrecoPromocional(produto.nome, qtd, produto.preco);
+        
+        // --- NOVO: VERIFICAÇÃO PARA O AVISO ---
+        if (precoAplicado < produto.preco) {
+            mostrarAvisoPromo(`${produto.nome} saiu por R$ ${precoAplicado.toFixed(2)} cada!`);
         }
 
-        const subtotal = produto.preco * qtd;
+        const subtotal = precoAplicado * qtd;
+
         carrinho.push({ 
             id: produto.id, 
-            nome: produto.nome, 
-            preco: produto.preco, 
+            nome: produto.nome + (precoAplicado < produto.preco ? " ⭐" : ""), 
+            preco: precoAplicado, 
             qtd, 
             subtotal 
         });
@@ -123,14 +157,11 @@ async function adicionarItem() {
         atualizarInterface();
         document.getElementById('inputProduto').value = '';
         document.getElementById('inputProduto').focus();
-    } else {
-        alert("Selecione um produto da lista!");
     }
 }
-
-
-
-
+ {
+        alert("Selecione um produto da lista!");
+ }
 
         let carrinho = [];
         let total = 0;
