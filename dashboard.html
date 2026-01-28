@@ -1,52 +1,58 @@
-<!DOCTYPE html>
-<html lang="pt-br">
-<head>
-    <meta charset="UTF-8">
-    <title>Dashboard - LevelUp Distribuidora</title>
-    <style>
-        body { font-family: sans-serif; background: #f0f2f5; display: flex; flex-direction: column; align-items: center; padding: 20px; }
-        .grid-cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; width: 100%; max-width: 900px; }
-        .card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); text-align: center; }
-        .card h3 { color: #7f8c8d; margin-bottom: 10px; font-size: 0.9rem; text-transform: uppercase; }
-        .card p { font-size: 1.8rem; font-weight: bold; margin: 0; color: #2c3e50; }
-        .destaque-verde { color: #27ae60 !important; }
-    </style>
-</head>
-<body>
+<style>
+    .tabela-container { background: white; padding: 20px; border-radius: 12px; margin-top: 30px; width: 90%; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+    table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+    th { text-align: left; border-bottom: 2px solid #eee; padding: 10px; color: #7f8c8d; }
+    td { padding: 12px; border-bottom: 1px solid #eee; }
+    .status-critico { color: #e74c3c; font-weight: bold; background: #fdeaea; padding: 4px 8px; border-radius: 4px; }
+    .status-ok { color: #27ae60; }
+    .vencido { background: #f39c12; color: white; padding: 2px 5px; border-radius: 3px; }
+</style>
 
-    <h1>Resumo da Distribuidora</h1>
-    
-    <div class="grid-cards">
-        <div class="card">
-            <h3>Faturamento Hoje</h3>
-            <p class="destaque-verde">R$ <span id="faturamento">0,00</span></p>
-        </div>
-        
-        <div class="card">
-            <h3>Produto Campeão (Hoje)</h3>
-            <p id="campeao">---</p>
-            <small id="campeaoQtd">0 unidades</small>
-        </div>
+<div class="tabela-container">
+    <h2>📦 Inventário Completo</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>Produto</th>
+                <th>Estoque Atual</th>
+                <th>Vencimento</th>
+                <th>Status Reposição</th>
+            </tr>
+        </thead>
+        <tbody id="corpoInventario">
+            </tbody>
+    </table>
+</div>
 
-        <div class="card">
-            <h3>Lucro Estimado</h3>
-            <p style="color: #2980b9;">R$ <span id="lucro">0,00</span></p>
-        </div>
-    </div>
+<script>
+    async function carregarInventario() {
+        const res = await fetch('http://localhost:3000/api/inventario');
+        const produtos = await res.json();
+        const corpo = document.getElementById('corpoInventario');
+        corpo.innerHTML = '';
 
-    <script>
-        async function carregarDados() {
-            const res = await fetch('http://localhost:3000/api/relatorios');
-            const dados = await res.json();
-            
-            document.getElementById('faturamento').innerText = dados.faturamentoHoje.toFixed(2);
-            document.getElementById('campeao').innerText = dados.produtoEstrela;
-            document.getElementById('campeaoQtd').innerText = dados.qtdEstrela + " unidades";
-        }
+        produtos.forEach(p => {
+            // Lógica de Reposição: Menos de 10 unidades é crítico
+            const statusReposisao = p.estoque < 10 
+                ? '<span class="status-critico">REPOR URGENTE</span>' 
+                : '<span class="status-ok">Estoque OK</span>';
 
-        carregarDados();
-        // Atualiza a cada 1 minuto
-        setInterval(carregarDados, 60000);
-    </script>
-</body>
-</html>
+            // Lógica de Vencimento simples
+            const dataVencimento = p.vencimento ? new Date(p.vencimento).toLocaleDateString() : 'Não inf.';
+            const hoje = new Date();
+            const vencimentoData = new Date(p.vencimento);
+            const classeVencimento = (vencimentoData < hoje && p.vencimento) ? 'class="vencido"' : '';
+
+            corpo.innerHTML += `
+                <tr>
+                    <td>${p.nome}</td>
+                    <td>${p.estoque} un</td>
+                    <td ${classeVencimento}>${dataVencimento}</td>
+                    <td>${statusReposisao}</td>
+                </tr>
+            `;
+        });
+    }
+    // Chame a função ao carregar a página
+    carregarInventario();
+</script>

@@ -16,6 +16,7 @@ await db.exec(`
         preco REAL,
         preco_custo REAL,
         estoque INTEGER
+        vencimento TEXT -- Formato AAAA-MM-DD
     );
 
     CREATE TABLE IF NOT EXISTS vendas (

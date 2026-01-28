@@ -29,7 +29,8 @@
             const produto = {
                 nome: document.getElementById('nome').value,
                 preco: parseFloat(document.getElementById('preco').value),
-                estoque: parseInt(document.getElementById('estoque').value)
+                estoque: parseInt(document.getElementById('estoque').value),   
+                vencimento: document.getElementById('vencimento').value    
             };
 
             if(!produto.nome || !produto.preco) return alert("Preencha os campos!");
@@ -45,6 +46,13 @@
                 location.reload(); // Limpa os campos
             }
         }
+
+
+        
     </script>
+
+
+<label>Data de Vencimento:</label>
+<input type="date" id="vencimento">
 </body>
 </html>

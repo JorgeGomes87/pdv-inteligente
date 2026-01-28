@@ -71,4 +71,10 @@ app.post('/api/vendas', async (req, res) => {
     res.json({ status: "Venda salva no SQLite!" });
 });
 
+app.get('/api/inventario', async (req, res) => {
+    const db = await abrirBanco();
+    const produtos = await db.all('SELECT * FROM produtos ORDER BY estoque ASC');
+    res.json(produtos);
+});
+
 app.listen(3000, () => console.log("Servidor rodando em http://localhost:3000"));
