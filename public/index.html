@@ -41,12 +41,32 @@
         </table>
     </div>
 
-    <div style="display: flex; gap: 10px; position: relative;">
-    <input type="text" id="inputProduto" list="listaProdutos" placeholder="Digite o nome da bebida..." style="flex: 2;" oninput="carregarSugestoes()">
-    <datalist id="listaProdutos">
-        </datalist>
-    <input type="number" id="inputQtd" value="1" style="width: 80px;">
-    <button onclick="adicionarItem()" style="background: var(--primary); color: white; border: none; cursor: pointer;">Adicionar (Enter)</button>
+   <div style="display: flex; gap: 20px;">
+    <div style="flex: 1;">
+        <h2>🛒 Carrinho de Compras</h2>
+        <table id="tabelaCarrinho">...</table>
+        <div id="totalVenda">Total: R$ 0,00</div>
+        <button onclick="finalizarVenda()">Finalizar (F2)</button>
+    </div>
+
+    <div style="flex: 1; background: #f9f9f9; padding: 15px; border-radius: 10px;">
+        <h2>📦 Produtos em Estoque</h2>
+        <input type="text" id="filtroCatalogo" placeholder="🔍 Filtrar produto..." onkeyup="filtrarCatalogo()">
+        <div style="max-height: 400px; overflow-y: auto;">
+            <table id="tabelaCatalogo">
+                <thead>
+                    <tr>
+                        <th>Cód.</th>
+                        <th>Produto</th>
+                        <th>Preço</th>
+                        <th>Ação</th>
+                    </tr>
+                </thead>
+                <tbody id="corpoCatalogo">
+                    </tbody>
+            </table>
+        </div>
+    </div>
 </div>
 
     <div class="resumo-venda">
@@ -77,6 +97,84 @@
 
    
     <script>
+
+        // Carrega os produtos assim que abrir a página
+async function carregarCatalogo() {
+    const res = await fetch('http://localhost:3000/api/produtos');
+    const produtos = await res.json();
+    window.produtosDoBanco = produtos; // Salva na memória
+    renderizarCatalogo(produtos);
+}
+
+function renderizarCatalogo(lista) {
+    const corpo = document.getElementById('corpoCatalogo');
+    corpo.innerHTML = '';
+    lista.forEach(p => {
+        corpo.innerHTML += `
+            <tr>
+                <td><strong>${String(p.id).padStart(3, '0')}</strong></td>
+                <td>${p.nome}</td>
+                <td>R$ ${p.preco.toFixed(2)}</td>
+                <td>
+                    <button onclick="selecionarProduto(${p.id})">➕ Adicionar</button>
+                </td>
+            </tr>
+        `;
+    });
+}
+
+// Função para quando clicar no botão da tabela
+let produtoSelecionadoNoMomento = null;
+
+// Agora essa função apenas abre a janelinha
+function selecionarProduto(id) {
+    const produto = window.produtosDoBanco.find(p => p.id === id);
+    if (produto) {
+        produtoSelecionadoNoMomento = produto;
+        document.getElementById('nomeProdutoModal').innerText = produto.nome;
+        document.getElementById('qtdManual').value = 1; // Reseta para 1
+        document.getElementById('modalQtd').style.display = 'flex';
+        
+        // Foca no campo de quantidade automaticamente
+        setTimeout(() => document.getElementById('qtdManual').select(), 100);
+    }
+}
+
+// Essa função é chamada quando você dá Enter ou clica em Confirmar
+function confirmarQtd() {
+    const qtd = parseInt(document.getElementById('qtdManual').value) || 1;
+    const produto = produtoSelecionadoNoMomento;
+
+    if (produto) {
+        // Usa sua lógica de promoção que já criamos (2 por 10, etc)
+        const precoAplicado = calcularPrecoPromocional(produto.nome, qtd, produto.preco);
+        const subtotal = precoAplicado * qtd;
+
+        carrinho.push({
+            id: produto.id,
+            nome: produto.nome + (precoAplicado < produto.preco ? " ⭐" : ""),
+            preco: precoAplicado,
+            qtd: qtd,
+            subtotal: subtotal
+        });
+
+        atualizarInterface();
+        mostrarAvisoPromo(`${qtd}x ${produto.nome} no carrinho!`);
+        
+        // Fecha a janelinha
+        document.getElementById('modalQtd').style.display = 'none';
+        produtoSelecionadoNoMomento = null;
+    }
+}// Filtro rápido para não ter que rolar a lista
+function filtrarCatalogo() {
+    const termo = document.getElementById('filtroCatalogo').value.toLowerCase();
+    const filtrados = window.produtosDoBanco.filter(p => 
+        p.nome.toLowerCase().includes(termo) || p.id.toString().includes(termo)
+    );
+    renderizarCatalogo(filtrados);
+}
+
+window.onload = carregarCatalogo;
 
 
 function mostrarAvisoPromo(mensagem) {
@@ -230,39 +328,44 @@ function calcularTroco() {
     }
 }
 
-       function atualizarInterface() {
-    const tbody = document.querySelector('#tabelaItens tbody');
-    tbody.innerHTML = '';
-    total = 0;
+      function atualizarInterface() {
+    const corpoCarrinho = document.getElementById('corpoCarrinho');
+    corpoCarrinho.innerHTML = '';
+    let totalGeral = 0;
 
     carrinho.forEach((item, index) => {
-        total += item.subtotal;
-        tbody.innerHTML += `
+        totalGeral += item.subtotal;
+        corpoCarrinho.innerHTML += `
             <tr>
                 <td>${item.nome}</td>
                 <td>${item.qtd}</td>
                 <td>R$ ${item.preco.toFixed(2)}</td>
                 <td>R$ ${item.subtotal.toFixed(2)}</td>
                 <td>
-                    <button onclick="removerItem(${index})" style="background:none; border:none; color:var(--danger); cursor:pointer; font-weight:bold;">
-                        [ X ]
+                    <button onclick="removerItem(${index})" style="background:none; border:none; color:#e74c3c; cursor:pointer; font-size:18px;">
+                        🗑️
                     </button>
                 </td>
             </tr>
         `;
     });
 
-    document.getElementById('valorTotal').innerText = total.toFixed(2);
-    // Se mudar o total, recalcula o troco automaticamente
-    if(formaPagamento === 'Dinheiro') calcularTroco();
+    document.getElementById('totalVenda').innerText = `Total: R$ ${totalGeral.toFixed(2)}`;
 }
+// Se mudar o total, recalcula o troco automaticamente
+    if(formaPagamento === 'Dinheiro') calcularTroco();
+
 
 function removerItem(index) {
-    // Remove 1 elemento na posição 'index'
+    // Remove 1 item na posição 'index'
     carrinho.splice(index, 1);
+    
+    // Atualiza a tela para mostrar o carrinho novo
     atualizarInterface();
+    
+    // Opcional: Avisar que foi removido
+    console.log("Item removido do carrinho.");
 }
-
       function finalizarVenda() {
     if (carrinho.length === 0) return alert("Carrinho vazio!");
     if (!formaPagamento) return alert("Selecione o pagamento!");
@@ -348,6 +451,16 @@ function resetarPDV() {
     <button onclick="copiarRecibo()" style="background: #25d366; color: white; border: none; padding: 10px; width: 100%; cursor: pointer;">
         Copiado para WhatsApp 📱
     </button>
+<div id="modalQtd" class="modal-qtd">
+    <div class="modal-conteudo">
+        <h3 id="nomeProdutoModal">Produto</h3>
+        <p>Informe a quantidade:</p>
+        <input type="number" id="qtdManual" value="1" min="1" onkeypress="if(event.key==='Enter') confirmarQtd()">
+        <button class="btn-confirmar" onclick="confirmarQtd()">Confirmar (Enter)</button>
+        <button onclick="document.getElementById('modalQtd').style.display='none'" style="margin-top:10px; border:none; background:none; color:gray; cursor:pointer;">Cancelar</button>
+    </div>
+</div>
+
 </div>
 </body>
 </html>
