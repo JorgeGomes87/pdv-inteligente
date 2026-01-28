@@ -9,6 +9,6 @@ start /min node server.js
 timeout /t 2 /nobreak > nul
 
 :: Abre o PDV no navegador padrão
-start http://localhost:3000/index.html
+start http://localhost:3000
 
 exit

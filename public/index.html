@@ -53,21 +53,27 @@
         <h2>📦 Produtos em Estoque</h2>
         <input type="text" id="filtroCatalogo" placeholder="🔍 Filtrar produto..." onkeyup="filtrarCatalogo()">
         <div style="max-height: 400px; overflow-y: auto;">
-            <table id="tabelaCatalogo">
-                <thead>
-                    <tr>
-                        <th>Cód.</th>
-                        <th>Produto</th>
-                        <th>Preço</th>
-                        <th>Ação</th>
-                    </tr>
-                </thead>
-                <tbody id="corpoCatalogo">
-                    </tbody>
-            </table>
-        </div>
-    </div>
+            <table>
+    <thead>
+        <tr><th>Cod</th><th>Produto</th><th>Preço</th><th>Add</th></tr>
+    </thead>
+    <tbody id="corpoCatalogo"></tbody> </table>
+
+<table>
+    <thead>
+        <tr><th>Item</th><th>Qtd</th><th>Subtotal</th><th>Ação</th></tr>
+    </thead>
+    <tbody id="corpoCarrinho"></tbody> </table>
+
+<h1 id="totalVenda">R$ 0,00</h1>
+
+<div id="modalQtd" style="display:none;">
+    <input type="number" id="inputQtd" value="1">
+    <button onclick="confirmarAdicao()">Confirmar</button>
 </div>
+
+
+
 
     <div class="resumo-venda">
     <h3>Resumo</h3>
@@ -97,14 +103,83 @@
 
    
     <script>
+        let carrinho = [];
+        let produtoSelecionado = null;
+        let formaPagamento = 'Dinheiro';
 
         // Carrega os produtos assim que abrir a página
 async function carregarCatalogo() {
-    const res = await fetch('http://localhost:3000/api/produtos');
+    const res = await fetch('/api/produtos');
     const produtos = await res.json();
-    window.produtosDoBanco = produtos; // Salva na memória
-    renderizarCatalogo(produtos);
+    window.produtosDoBanco = produtos;    renderizarCatalogo(produtos);
+
+let carrinho = [];
+let produtoSelecionado = null;
+
+// Resolve o Erro: formaPagamento is not defined
+let formaPagamento = 'Dinheiro'; 
+
+async function carregarCatalogo() {
+    const res = await fetch('/api/produtos');
+    const produtos = await res.json();
+    window.produtosDoBanco = produtos;
+
+    const tabela = document.getElementById('corpoCatalogo');
+    if (!tabela) return; // Evita o erro de "null"
+
+    tabela.innerHTML = produtos.map(p => `
+        <tr>
+            <td>${p.id}</td>
+            <td>${p.nome}</td>
+            <td>R$ ${p.preco.toFixed(2)}</td>
+            <td><button onclick="abrirModal(${p.id})">➕</button></td>
+        </tr>
+    `).join('');
 }
+
+function abrirModal(id) {
+    produtoSelecionado = window.produtosDoBanco.find(p => p.id === id);
+    document.getElementById('modalQtd').style.display = 'flex';
+}
+
+function confirmarAdicao() {
+    const qtd = parseInt(document.getElementById('inputQtd').value);
+    const item = {
+        ...produtoSelecionado,
+        quantidade: qtd,
+        subtotal: produtoSelecionado.preco * qtd
+    };
+    
+    carrinho.push(item);
+    atualizarInterface();
+    document.getElementById('modalQtd').style.display = 'none';
+}
+
+function atualizarInterface() {
+    const corpo = document.getElementById('corpoCarrinho');
+    const displayTotal = document.getElementById('totalVenda');
+    
+    if (!corpo || !displayTotal) return; // Mata o erro 347 e 337
+
+    let total = 0;
+    corpo.innerHTML = carrinho.map((item, index) => {
+        total += item.subtotal;
+        return `
+            <tr>
+                <td>${item.nome}</td>
+                <td>${item.quantidade}</td>
+                <td>R$ ${item.subtotal.toFixed(2)}</td>
+                <td><button onclick="remover(${index})">🗑️</button></td>
+            </tr>
+        `;
+    }).join('');
+
+    displayTotal.innerText = `R$ ${total.toFixed(2)}`;
+}
+
+window.onload = carregarCatalogo;
+}
+
 
 function renderizarCatalogo(lista) {
     const corpo = document.getElementById('corpoCatalogo');
@@ -262,7 +337,53 @@ async function adicionarItem() {
  }
 
         let carrinho = [];
-        let total = 0;
+        
+        function selecionarProduto(id) {
+    const produto = window.produtosDoBanco.find(p => p.id === id);
+    if (!produto) return;
+
+    window.produtoAtual = produto;
+
+    document.getElementById('modalQtd').style.display = 'flex';
+    document.getElementById('inputQtd').value = 1;
+    document.getElementById('inputQtd').focus();
+}
+
+function adicionarAoCarrinho() {
+    const qtd = parseInt(document.getElementById('inputQtd').value);
+    if (qtd <= 0) return;
+
+    const item = {
+        ...window.produtoAtual,
+        quantidade: qtd,
+        subtotal: window.produtoAtual.preco * qtd
+    };
+
+    carrinho.push(item);
+    atualizarTabelaCarrinho();
+    fecharModal();
+}
+
+// 3. Função para desenhar o carrinho na tela
+function atualizarTabelaCarrinho() {
+    const corpo = document.getElementById('corpoCarrinho');
+    let totalGeral = 0;
+    corpo.innerHTML = '';
+
+    carrinho.forEach((item, index) => {
+        totalGeral += item.subtotal;
+        corpo.innerHTML += `
+            <tr>
+                <td>${item.nome}</td>
+                <td>${item.quantidade}</td>
+                <td>R$ ${item.subtotal.toFixed(2)}</td>
+                <td><button onclick="removerDoCarrinho(${index})">🗑️</button></td>
+            </tr>
+        `;
+    });
+
+    document.getElementById('totalVenda').innerText = `R$ ${totalGeral.toFixed(2)}`;
+}
 
         // Simulação de banco de dados local para teste rápido
         const buscarProduto = (nome) => {
@@ -422,6 +543,45 @@ fetch('http://localhost:3000/api/vendas', {
     
      
 }
+
+async function carregarCatalogo() {
+    console.log("Tentando buscar produtos..."); // Isso vai aparecer no F12
+    try {
+        const res = await fetch('/api/produtos'); // Busca na rota que você testou
+        if (!res.ok) throw new Error('Erro ao buscar dados do servidor');
+        
+        const produtos = await res.json();
+        console.log("Produtos recebidos:", produtos);
+
+        window.produtosDoBanco = produtos; // Guarda na memória
+        
+        const corpo = document.getElementById('corpoCatalogo');
+        if (!corpo) {
+            console.error("Erro: Não achei a tabela com id 'corpoCatalogo'");
+            return;
+        }
+
+        corpo.innerHTML = ''; // Limpa a tabela antes de encher
+        
+        produtos.forEach(p => {
+            corpo.innerHTML += `
+                <tr>
+                    <td><strong>${String(p.id).padStart(3, '0')}</strong></td>
+                    <td>${p.nome}</td>
+                    <td>R$ ${p.preco.toFixed(2)}</td>
+                    <td>
+                        <button onclick="selecionarProduto(${p.id})" style="cursor:pointer; padding:5px 10px;">➕</button>
+                    </td>
+                </tr>
+            `;
+        });
+    } catch (erro) {
+        console.error("Erro detalhado:", erro);
+    }
+}
+
+// Isso garante que a função rode assim que a página abrir
+window.onload = carregarCatalogo;
 
 function copiarRecibo() {
     const texto = document.getElementById('textoRecibo').innerText;
