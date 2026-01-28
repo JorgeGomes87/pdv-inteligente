@@ -1,13 +1,15 @@
 const express = require('express');
 const cors = require('cors');
 const { abrirBanco } = require('./database');
-
+const path = require('path');
 const app = express();
-app.use(express.json());
+app.use(express.static(path.join(__dirname, 'public')));
 app.use(cors());
 
-const path = require('path');
-
+// Rota principal para abrir o index.html automaticamente
+app.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
 // Rota para cadastrar novo produto
 app.post('/api/produtos', async (req, res) => {
     const { nome, preco, estoque } = req.body;
