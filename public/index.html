@@ -5,622 +5,424 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>PDV Inteligente - Distribuidora</title>
     <style>
-        :root { --primary: #2c3e50; --success: #27ae60; --danger: #c0392b; }
-        body { font-family: sans-serif; display: grid; grid-template-columns: 1fr 350px; gap: 20px; padding: 20px; background: #f4f4f4; }
-        .caixa-principal { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
-        .resumo-venda { background: var(--primary); color: white; padding: 20px; border-radius: 8px; }
-        input, button { padding: 10px; font-size: 1.1rem; margin-bottom: 10px; }
-        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-        th, td { border-bottom: 1px solid #ddd; padding: 10px; text-align: left; }
-        .total-destaque { font-size: 2rem; color: #f1c40f; font-weight: bold; }
-        .btn-vender { width: 100%; background: var(--success); color: white; border: none; cursor: pointer; padding: 15px; font-weight: bold; }
+        :root { 
+            --primary: #2c3e50; 
+            --success: #27ae60; 
+            --danger: #c0392b; 
+            --warning: #f1c40f;
+        }
+        
+        body { 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            display: grid; 
+            grid-template-columns: 1fr 400px; 
+            gap: 20px; 
+            padding: 20px; 
+            background: #ecf0f1; 
+            margin: 0;
+        }
+
+        /* Layout */
+        .col-esquerda { display: flex; flex-direction: column; gap: 20px; }
+        .caixa-principal, .catalogo-container { 
+            background: white; 
+            padding: 20px; 
+            border-radius: 8px; 
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1); 
+        }
+
+        /* Tabelas */
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        th { background: #f8f9fa; color: var(--primary); text-align: left; padding: 12px; border-bottom: 2px solid #dee2e6; }
+        td { padding: 12px; border-bottom: 1px solid #eee; }
+
+        /* Inputs e Botões */
+        input { padding: 10px; border: 1px solid #ddd; border-radius: 4px; font-size: 1rem; }
+        button { cursor: pointer; border-radius: 4px; transition: 0.2s; }
+        
+        .btn-pgto { 
+            padding: 10px; border: 1px solid #ccc; background: white; 
+            flex: 1; font-weight: bold;
+        }
+        .btn-pgto.ativo { background: var(--primary); color: white; border-color: var(--primary); }
+
+        .resumo-venda { 
+            background: var(--primary); 
+            color: white; 
+            padding: 25px; 
+            border-radius: 8px; 
+            position: sticky; 
+            top: 20px;
+        }
+
+        .total-destaque { font-size: 2.5rem; color: var(--warning); font-weight: bold; margin: 10px 0; }
+        .btn-vender { 
+            width: 100%; background: var(--success); color: white; 
+            border: none; padding: 18px; font-weight: bold; font-size: 1.2rem; margin-top: 15px;
+        }
+
+        /* Modal */
+        .modal-qtd {
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.6); align-items: center; justify-content: center; z-index: 1000;
+        }
+        .modal-conteudo { background: white; padding: 30px; border-radius: 10px; width: 300px; text-align: center; }
+        .modal-conteudo input { width: 80%; text-align: center; font-size: 1.5rem; margin: 15px 0; }
+
+        /* Promoção Alerta */
+        .alerta-promo {
+            position: fixed; top: 20px; right: 20px; background: var(--success);
+            color: white; padding: 15px 25px; border-radius: 5px; z-index: 2000;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2); transition: 0.5s;
+        }
+
+        .metodos-pagamento { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; }
+        
+        #areaRecibo { margin-top: 20px; border: 1px dashed #ccc; padding: 10px; background: #fff; color: #333; }
+        pre { white-space: pre-wrap; font-size: 0.85rem; }
     </style>
 </head>
 <body>
 
-    <div class="caixa-principal">
-        <h2>🛒 Novo Pedido</h2>
-        <div style="display: flex; gap: 10px;">
-            <input type="text" id="inputProduto" placeholder="Nome da Bebida ou Código" style="flex: 2;">
-            <input type="number" id="inputQtd" value="1" style="width: 80px;">
-            <button onclick="adicionarItem()" style="background: var(--primary); color: white; border: none; cursor: pointer;">Adicionar</button>
+    <div class="col-esquerda">
+        <div class="caixa-principal">
+            <h2>🛒 Novo Pedido</h2>
+            <div style="display: flex; gap: 10px; margin-bottom: 20px;">
+                <input type="text" id="inputProduto" placeholder="Nome da Bebida ou Código" style="flex: 2;" list="listaSugestoes">
+                <datalist id="listaSugestoes"></datalist>
+                <input type="number" id="inputQtdRapido" value="1" style="width: 80px;">
+                <button onclick="adicionarManual()" style="background: var(--primary); color: white; border: none; padding: 0 20px;">Adicionar</button>
+            </div>
+
+            <h3>Itens do Carrinho</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Item</th>
+                        <th>Qtd</th>
+                        <th>Preço Un.</th>
+                        <th>Subtotal</th>
+                        <th>Ação</th>
+                    </tr>
+                </thead>
+                <tbody id="corpoCarrinho"></tbody>
+            </table>
         </div>
 
-        <table id="tabelaItens">
-            <thead>
-                <tr>
-                    <th>Item</th>
-                    <th>Qtd</th>
-                    <th>Preço Un.</th>
-                    <th>Subtotal</th>
-                    <th>Ação</th>
-                </tr>
-            </thead>
-            <tbody>
-                </tbody>
-        </table>
+        <div class="catalogo-container">
+            <h2>📦 Catálogo de Produtos</h2>
+            <input type="text" id="filtroCatalogo" placeholder="🔍 Filtrar produto por nome ou código..." onkeyup="filtrarCatalogo()" style="width: 95%; margin-bottom: 15px;">
+            <div style="max-height: 400px; overflow-y: auto;">
+                <table>
+                    <thead>
+                        <tr><th>Cod</th><th>Produto</th><th>Preço</th><th>Add</th></tr>
+                    </thead>
+                    <tbody id="corpoCatalogo"></tbody>
+                </table>
+            </div>
+        </div>
     </div>
-
-   <div style="display: flex; gap: 20px;">
-    <div style="flex: 1;">
-        <h2>🛒 Carrinho de Compras</h2>
-        <table id="tabelaCarrinho">...</table>
-        <div id="totalVenda">Total: R$ 0,00</div>
-        <button onclick="finalizarVenda()">Finalizar (F2)</button>
-    </div>
-
-    <div style="flex: 1; background: #f9f9f9; padding: 15px; border-radius: 10px;">
-        <h2>📦 Produtos em Estoque</h2>
-        <input type="text" id="filtroCatalogo" placeholder="🔍 Filtrar produto..." onkeyup="filtrarCatalogo()">
-        <div style="max-height: 400px; overflow-y: auto;">
-            <table>
-    <thead>
-        <tr><th>Cod</th><th>Produto</th><th>Preço</th><th>Add</th></tr>
-    </thead>
-    <tbody id="corpoCatalogo"></tbody> </table>
-
-<table>
-    <thead>
-        <tr><th>Item</th><th>Qtd</th><th>Subtotal</th><th>Ação</th></tr>
-    </thead>
-    <tbody id="corpoCarrinho"></tbody> </table>
-
-<h1 id="totalVenda">R$ 0,00</h1>
-
-<div id="modalQtd" style="display:none;">
-    <input type="number" id="inputQtd" value="1">
-    <button onclick="confirmarAdicao()">Confirmar</button>
-</div>
-
-
-
 
     <div class="resumo-venda">
-    <h3>Resumo</h3>
-    <p>Total da Venda:</p>
-    <div class="total-destaque">R$ <span id="valorTotal">0,00</span></div>
-    
-    <br>
-    <label>Forma de Pagamento:</label>
-    <div class="metodos-pagamento">
-        <button class="btn-pgto" onclick="setPagamento('Pix', this)">📱 Pix</button>
-        <button class="btn-pgto" onclick="setPagamento('Dinheiro', this)">💵 Dinheiro</button>
-        <button class="btn-pgto" onclick="setPagamento('Débito', this)">💳 Débito</button>
-        <button class="btn-pgto" onclick="setPagamento('Crédito', this)">💳 Crédito</button>
+        <h3>Resumo da Venda</h3>
+        <p>Total a Pagar:</p>
+        <div class="total-destaque" id="valorTotal">R$ 0,00</div>
+        
+        <label>Forma de Pagamento:</label>
+        <div class="metodos-pagamento">
+            <button class="btn-pgto" onclick="setPagamento('Pix', this)">📱 Pix</button>
+            <button class="btn-pgto" onclick="setPagamento('Dinheiro', this)">💵 Dinheiro</button>
+            <button class="btn-pgto" onclick="setPagamento('Débito', this)">💳 Débito</button>
+            <button class="btn-pgto" onclick="setPagamento('Crédito', this)">💳 Crédito</button>
+        </div>
+
+        <div id="secaoTroco" style="display: none; margin-top: 20px; background: rgba(255,255,255,0.1); padding: 15px; border-radius: 5px;">
+            <label>Valor Recebido:</label>
+            <input type="number" id="valorRecebido" placeholder="0,00" oninput="calcularTroco()" style="width: 100%; margin-top: 5px;">
+            <p style="margin-top: 10px;">Troco: <span id="trocoResultado" style="font-weight: bold; color: var(--warning);">R$ 0,00</span></p>
+        </div>
+
+        <button class="btn-vender" onclick="finalizarVenda()">FINALIZAR (F2)</button>
+
+        <div id="areaRecibo" style="display: none;">
+            <pre id="textoRecibo"></pre>
+            <button onclick="copiarRecibo()" style="background: #25d366; color: white; border: none; padding: 10px; width: 100%; cursor: pointer; border-radius: 4px;">
+                Copiar p/ WhatsApp 📱
+            </button>
+        </div>
     </div>
-    
-    <input type="hidden" id="formaSelecionada" value="">
 
-    <div id="secaoTroco" style="display: none; margin-top: 15px; background: rgba(255,255,255,0.1); padding: 10px; border-radius: 5px;">
-        <label>Valor Recebido:</label>
-        <input type="number" id="valorRecebido" placeholder="0,00" oninput="calcularTroco()" style="width: 80%; color: black;">
-        <p>Troco: <span id="trocoResultado" style="font-weight: bold; color: #f1c40f;">R$ 0,00</span></p>
+    <!-- Modal de Quantidade -->
+    <div id="modalQtd" class="modal-qtd">
+        <div class="modal-conteudo">
+            <h3 id="nomeProdutoModal">Produto</h3>
+            <p>Informe a quantidade:</p>
+            <input type="number" id="qtdManual" value="1" min="1">
+            <button class="btn-vender" style="margin-top: 0;" onclick="confirmarQtd()">Confirmar (Enter)</button>
+            <button onclick="fecharModal()" style="margin-top:10px; border:none; background:none; color:gray; cursor:pointer;">Cancelar</button>
+        </div>
     </div>
 
-    <br>
-    <button class="btn-vender" onclick="finalizarVenda()">FINALIZAR (F2)</button>
-</div>
-
-   
     <script>
+        // Configurações e Estado Global
+        let produtosDoBanco = [];
         let carrinho = [];
-        let produtoSelecionado = null;
-        let formaPagamento = 'Dinheiro';
+        let totalVenda = 0;
+        let formaPagamento = '';
+        let produtoSelecionadoNoMomento = null;
+        const API_URL = 'http://localhost:3000/api'; // Ajuste conforme seu backend
 
-        // Carrega os produtos assim que abrir a página
-async function carregarCatalogo() {
-    const res = await fetch('/api/produtos');
-    const produtos = await res.json();
-    window.produtosDoBanco = produtos;    renderizarCatalogo(produtos);
+        // Inicialização
+        window.onload = async () => {
+            await carregarProdutos();
+            document.getElementById('inputProduto').focus();
+        };
 
-let carrinho = [];
-let produtoSelecionado = null;
-
-// Resolve o Erro: formaPagamento is not defined
-let formaPagamento = 'Dinheiro'; 
-
-async function carregarCatalogo() {
-    const res = await fetch('/api/produtos');
-    const produtos = await res.json();
-    window.produtosDoBanco = produtos;
-
-    const tabela = document.getElementById('corpoCatalogo');
-    if (!tabela) return; // Evita o erro de "null"
-
-    tabela.innerHTML = produtos.map(p => `
-        <tr>
-            <td>${p.id}</td>
-            <td>${p.nome}</td>
-            <td>R$ ${p.preco.toFixed(2)}</td>
-            <td><button onclick="abrirModal(${p.id})">➕</button></td>
-        </tr>
-    `).join('');
-}
-
-function abrirModal(id) {
-    produtoSelecionado = window.produtosDoBanco.find(p => p.id === id);
-    document.getElementById('modalQtd').style.display = 'flex';
-}
-
-function confirmarAdicao() {
-    const qtd = parseInt(document.getElementById('inputQtd').value);
-    const item = {
-        ...produtoSelecionado,
-        quantidade: qtd,
-        subtotal: produtoSelecionado.preco * qtd
-    };
-    
-    carrinho.push(item);
-    atualizarInterface();
-    document.getElementById('modalQtd').style.display = 'none';
-}
-
-function atualizarInterface() {
-    const corpo = document.getElementById('corpoCarrinho');
-    const displayTotal = document.getElementById('totalVenda');
-    
-    if (!corpo || !displayTotal) return; // Mata o erro 347 e 337
-
-    let total = 0;
-    corpo.innerHTML = carrinho.map((item, index) => {
-        total += item.subtotal;
-        return `
-            <tr>
-                <td>${item.nome}</td>
-                <td>${item.quantidade}</td>
-                <td>R$ ${item.subtotal.toFixed(2)}</td>
-                <td><button onclick="remover(${index})">🗑️</button></td>
-            </tr>
-        `;
-    }).join('');
-
-    displayTotal.innerText = `R$ ${total.toFixed(2)}`;
-}
-
-window.onload = carregarCatalogo;
-}
-
-
-function renderizarCatalogo(lista) {
-    const corpo = document.getElementById('corpoCatalogo');
-    corpo.innerHTML = '';
-    lista.forEach(p => {
-        corpo.innerHTML += `
-            <tr>
-                <td><strong>${String(p.id).padStart(3, '0')}</strong></td>
-                <td>${p.nome}</td>
-                <td>R$ ${p.preco.toFixed(2)}</td>
-                <td>
-                    <button onclick="selecionarProduto(${p.id})">➕ Adicionar</button>
-                </td>
-            </tr>
-        `;
-    });
-}
-
-// Função para quando clicar no botão da tabela
-let produtoSelecionadoNoMomento = null;
-
-// Agora essa função apenas abre a janelinha
-function selecionarProduto(id) {
-    const produto = window.produtosDoBanco.find(p => p.id === id);
-    if (produto) {
-        produtoSelecionadoNoMomento = produto;
-        document.getElementById('nomeProdutoModal').innerText = produto.nome;
-        document.getElementById('qtdManual').value = 1; // Reseta para 1
-        document.getElementById('modalQtd').style.display = 'flex';
-        
-        // Foca no campo de quantidade automaticamente
-        setTimeout(() => document.getElementById('qtdManual').select(), 100);
-    }
-}
-
-// Essa função é chamada quando você dá Enter ou clica em Confirmar
-function confirmarQtd() {
-    const qtd = parseInt(document.getElementById('qtdManual').value) || 1;
-    const produto = produtoSelecionadoNoMomento;
-
-    if (produto) {
-        // Usa sua lógica de promoção que já criamos (2 por 10, etc)
-        const precoAplicado = calcularPrecoPromocional(produto.nome, qtd, produto.preco);
-        const subtotal = precoAplicado * qtd;
-
-        carrinho.push({
-            id: produto.id,
-            nome: produto.nome + (precoAplicado < produto.preco ? " ⭐" : ""),
-            preco: precoAplicado,
-            qtd: qtd,
-            subtotal: subtotal
+        // Atalhos de teclado
+        window.addEventListener('keydown', (e) => {
+            if(e.key === 'F2') finalizarVenda();
+            if(e.key === 'Enter' && document.getElementById('modalQtd').style.display === 'flex') confirmarQtd();
         });
 
-        atualizarInterface();
-        mostrarAvisoPromo(`${qtd}x ${produto.nome} no carrinho!`);
-        
-        // Fecha a janelinha
-        document.getElementById('modalQtd').style.display = 'none';
-        produtoSelecionadoNoMomento = null;
-    }
-}// Filtro rápido para não ter que rolar a lista
-function filtrarCatalogo() {
-    const termo = document.getElementById('filtroCatalogo').value.toLowerCase();
-    const filtrados = window.produtosDoBanco.filter(p => 
-        p.nome.toLowerCase().includes(termo) || p.id.toString().includes(termo)
-    );
-    renderizarCatalogo(filtrados);
-}
+        async function carregarProdutos() {
+            try {
+                // Simulação de dados caso o fetch falhe (para teste local)
+                const mockData = [
+                    {id: 1, nome: "Cerveja Heineken 330ml", preco: 9.99},
+                    {id: 2, nome: "Cerveja Antarctica 269ml", preco: 6.50},
+                    {id: 3, nome: "Cerveja Brahma 350ml", preco: 5.80},
+                    {id: 4, nome: "Cerveja Império 269ml", preco: 5.50},
+                    {id: 5, nome: "Coca-Cola 2L", preco: 12.00}
+                ];
 
-window.onload = carregarCatalogo;
-
-
-function mostrarAvisoPromo(mensagem) {
-    const alerta = document.createElement('div');
-    alerta.className = 'alerta-promo';
-    alerta.innerHTML = `🎉 PROMOÇÃO ATIVA: ${mensagem}`;
-    document.body.appendChild(alerta);
-
-    setTimeout(() => {
-        alerta.style.opacity = '0';
-        setTimeout(() => alerta.remove(), 500);
-    }, 3000);
-}
-
-let produtosDoBanco = [];
-
-// Carrega os produtos assim que a página abre
-window.onload = async () => {
-    const response = await fetch('http://localhost:3000/api/produtos');
-    produtosDoBanco = await response.json();
-    popularSugestoes();
-};
-
-function popularSugestoes() {
-    const datalist = document.getElementById('listaProdutos');
-    datalist.innerHTML = ''; // Limpa antes de carregar
-    
-    produtosDoBanco.forEach(p => {
-        const option = document.createElement('option');
-        option.value = p.nome;
-        datalist.appendChild(option);
-    });
-}
-
-function calcularPrecoPromocional(nome, qtd, precoOriginal) {
-    const nomeMinusculo = nome.toLowerCase();
-
-    // Promoção Heineken: de 9.99 por 7.99 (independente da qtd)
-    if (nomeMinusculo.includes("heineken")) {
-        return 7.99;
-    }
-
-    // Promoção 2 por 10.00 (sai 5.00 cada) para Antarctica, Brahma e Império
-    const marcasPromo = ["antarctica", "brahma", "imperio"];
-    const ehCervejaPromo = marcasPromo.some(marca => nomeMinusculo.includes(marca));
-
-    if (ehCervejaPromo && qtd >= 2) {
-        return 5.00; // Preço unitário na promoção
-    }
-
-    return precoOriginal;
-}
-
-async function adicionarItem() {
-    const busca = document.getElementById('inputProduto').value;
-    const qtd = parseInt(document.getElementById('inputQtd').value) || 1;
-    
-    const produto = produtosDoBanco.find(p => p.nome.toLowerCase() === busca.toLowerCase());
-
-    if (produto) {
-        const precoAplicado = calcularPrecoPromocional(produto.nome, qtd, produto.preco);
-        
-        // --- NOVO: VERIFICAÇÃO PARA O AVISO ---
-        if (precoAplicado < produto.preco) {
-            mostrarAvisoPromo(`${produto.nome} saiu por R$ ${precoAplicado.toFixed(2)} cada!`);
+                const res = await fetch(`${API_URL}/produtos`).catch(() => null);
+                produtosDoBanco = res ? await res.json() : mockData;
+                
+                renderizarCatalogo(produtosDoBanco);
+                popularSugestoes();
+            } catch (err) {
+                console.error("Erro ao carregar catálogo:", err);
+            }
         }
 
-        const subtotal = precoAplicado * qtd;
-
-        carrinho.push({ 
-            id: produto.id, 
-            nome: produto.nome + (precoAplicado < produto.preco ? " ⭐" : ""), 
-            preco: precoAplicado, 
-            qtd, 
-            subtotal 
-        });
-        
-        atualizarInterface();
-        document.getElementById('inputProduto').value = '';
-        document.getElementById('inputProduto').focus();
-    }
-}
- {
-        alert("Selecione um produto da lista!");
- }
-
-        let carrinho = [];
-        
-        function selecionarProduto(id) {
-    const produto = window.produtosDoBanco.find(p => p.id === id);
-    if (!produto) return;
-
-    window.produtoAtual = produto;
-
-    document.getElementById('modalQtd').style.display = 'flex';
-    document.getElementById('inputQtd').value = 1;
-    document.getElementById('inputQtd').focus();
-}
-
-function adicionarAoCarrinho() {
-    const qtd = parseInt(document.getElementById('inputQtd').value);
-    if (qtd <= 0) return;
-
-    const item = {
-        ...window.produtoAtual,
-        quantidade: qtd,
-        subtotal: window.produtoAtual.preco * qtd
-    };
-
-    carrinho.push(item);
-    atualizarTabelaCarrinho();
-    fecharModal();
-}
-
-// 3. Função para desenhar o carrinho na tela
-function atualizarTabelaCarrinho() {
-    const corpo = document.getElementById('corpoCarrinho');
-    let totalGeral = 0;
-    corpo.innerHTML = '';
-
-    carrinho.forEach((item, index) => {
-        totalGeral += item.subtotal;
-        corpo.innerHTML += `
-            <tr>
-                <td>${item.nome}</td>
-                <td>${item.quantidade}</td>
-                <td>R$ ${item.subtotal.toFixed(2)}</td>
-                <td><button onclick="removerDoCarrinho(${index})">🗑️</button></td>
-            </tr>
-        `;
-    });
-
-    document.getElementById('totalVenda').innerText = `R$ ${totalGeral.toFixed(2)}`;
-}
-
-        // Simulação de banco de dados local para teste rápido
-        const buscarProduto = (nome) => {
-            // Aqui depois faremos o fetch() para o backend
-            return { nome: nome, preco: 5.50 }; 
-        }
-        
-        function setPagamento(metodo, elemento) {
-    formaPagamento = metodo;
-    
-    // Mostra seção de troco apenas se for Dinheiro
-    const secao = document.getElementById('secaoTroco');
-    if (metodo === 'Dinheiro') {
-        secao.style.display = 'block';
-        document.getElementById('valorRecebido').focus();
-    } else {
-        secao.style.display = 'none';
-    }
-
-    // Estilização dos botões
-    document.querySelectorAll('.btn-pgto').forEach(btn => btn.classList.remove('ativo'));
-    elemento.classList.add('ativo');
-}
-
-function calcularTroco() {
-    const recebido = parseFloat(document.getElementById('valorRecebido').value) || 0;
-    const troco = recebido - total;
-    const displayTroco = document.getElementById('trocoResultado');
-
-    if (recebido > 0 && troco >= 0) {
-        displayTroco.innerText = `R$ ${troco.toFixed(2)}`;
-        displayTroco.style.color = "#27ae60"; // Verde se estiver ok
-    } else {
-        displayTroco.innerText = `R$ 0,00`;
-        displayTroco.style.color = "#f1c40f";
-    }
-}
-       async function adicionarItem() {
-    const busca = document.getElementById('inputProduto').value;
-    const qtd = parseInt(document.getElementById('inputQtd').value);
-    
-    // Busca no banco de dados
-    const response = await fetch('http://localhost:3000/api/produtos');
-    const produtos = await response.json();
-    
-    // Procura o produto pelo nome
-    const produtoEncontrado = produtos.find(p => p.nome.toLowerCase().includes(busca.toLowerCase()));
-
-    if (produtoEncontrado) {
-        const subtotal = produtoEncontrado.preco * qtd;
-        carrinho.push({ 
-            id: produtoEncontrado.id, 
-            nome: produtoEncontrado.nome, 
-            preco: produtoEncontrado.preco, 
-            qtd, 
-            subtotal 
-        });
-        atualizarInterface();
-        document.getElementById('inputProduto').value = '';
-        document.getElementById('inputProduto').focus();
-    } else {
-        alert("Produto não encontrado no estoque!");
-    }
-}
-
-      function atualizarInterface() {
-    const corpoCarrinho = document.getElementById('corpoCarrinho');
-    corpoCarrinho.innerHTML = '';
-    let totalGeral = 0;
-
-    carrinho.forEach((item, index) => {
-        totalGeral += item.subtotal;
-        corpoCarrinho.innerHTML += `
-            <tr>
-                <td>${item.nome}</td>
-                <td>${item.qtd}</td>
-                <td>R$ ${item.preco.toFixed(2)}</td>
-                <td>R$ ${item.subtotal.toFixed(2)}</td>
-                <td>
-                    <button onclick="removerItem(${index})" style="background:none; border:none; color:#e74c3c; cursor:pointer; font-size:18px;">
-                        🗑️
-                    </button>
-                </td>
-            </tr>
-        `;
-    });
-
-    document.getElementById('totalVenda').innerText = `Total: R$ ${totalGeral.toFixed(2)}`;
-}
-// Se mudar o total, recalcula o troco automaticamente
-    if(formaPagamento === 'Dinheiro') calcularTroco();
-
-
-function removerItem(index) {
-    // Remove 1 item na posição 'index'
-    carrinho.splice(index, 1);
-    
-    // Atualiza a tela para mostrar o carrinho novo
-    atualizarInterface();
-    
-    // Opcional: Avisar que foi removido
-    console.log("Item removido do carrinho.");
-}
-      function finalizarVenda() {
-    if (carrinho.length === 0) return alert("Carrinho vazio!");
-    if (!formaPagamento) return alert("Selecione o pagamento!");
-
-    let recebido = 0;
-    let troco = 0;
-
-    if (formaPagamento === 'Dinheiro') {
-        recebido = parseFloat(document.getElementById('valorRecebido').value) || 0;
-        if (recebido < total) return alert("Valor insuficiente!");
-        troco = recebido - total;
-    }
-
-    // --- GERANDO O TEXTO DO RECIBO ---
-    const cabecalho = "==== É A BOA DISTRIBUIDORA ====\n";
-    const dataVenda = `Data: ${new Date().toLocaleString()}\n`;
-    const divisor = "----------------------------------\n";
-    let itensTexto = "PRODUTO           QTD    SUBTOTAL\n";
-
-    carrinho.forEach(item => {
-        // Formatação simples para alinhar colunas
-        const nomeCurto = item.nome.substring(0, 15).padEnd(16, " ");
-        const qtdStr = item.qtd.toString().padEnd(6, " ");
-        itensTexto += `${nomeCurto} ${qtdStr} R$ ${item.subtotal.toFixed(2)}\n`;
-    });
-
-    const rodape = `\nTOTAL: R$ ${total.toFixed(2)}\n` +
-                   `PAGAMENTO: ${formaPagamento}\n` +
-                   (formaPagamento === 'Dinheiro' ? `RECEBIDO: R$ ${recebido.toFixed(2)}\nTROCO: R$ ${troco.toFixed(2)}\n` : "") +
-                   "\n==================================\n" +
-                   "OBRIGADO PELA PREFERENCIA!";
-
-    const cupomCompleto = cabecalho + dataVenda + divisor + itensTexto + divisor + rodape;
-
-    // Exibe o recibo na tela (opcional)
-    document.getElementById('textoRecibo').innerText = cupomCompleto;
-    document.getElementById('areaRecibo').style.display = 'block';
-
-    alert("Venda registrada!");
-
-    // Dentro da função finalizarVenda, logo após o alert:
-fetch('http://localhost:3000/api/vendas', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-        total: total,
-        pagamento: formaPagamento,
-        itens: carrinho
-    })
-})
-.then(res => res.json())
-.then(dados => console.log("Salvo no banco:", dados))
-.catch(err => console.error("Erro ao salvar:", err));
-    
-     
-}
-
-async function carregarCatalogo() {
-    console.log("Tentando buscar produtos..."); // Isso vai aparecer no F12
-    try {
-        const res = await fetch('/api/produtos'); // Busca na rota que você testou
-        if (!res.ok) throw new Error('Erro ao buscar dados do servidor');
-        
-        const produtos = await res.json();
-        console.log("Produtos recebidos:", produtos);
-
-        window.produtosDoBanco = produtos; // Guarda na memória
-        
-        const corpo = document.getElementById('corpoCatalogo');
-        if (!corpo) {
-            console.error("Erro: Não achei a tabela com id 'corpoCatalogo'");
-            return;
+        function popularSugestoes() {
+            const list = document.getElementById('listaSugestoes');
+            list.innerHTML = produtosDoBanco.map(p => `<option value="${p.nome}">`).join('');
         }
 
-        corpo.innerHTML = ''; // Limpa a tabela antes de encher
-        
-        produtos.forEach(p => {
-            corpo.innerHTML += `
+        function renderizarCatalogo(lista) {
+            const corpo = document.getElementById('corpoCatalogo');
+            corpo.innerHTML = lista.map(p => `
                 <tr>
                     <td><strong>${String(p.id).padStart(3, '0')}</strong></td>
                     <td>${p.nome}</td>
                     <td>R$ ${p.preco.toFixed(2)}</td>
-                    <td>
-                        <button onclick="selecionarProduto(${p.id})" style="cursor:pointer; padding:5px 10px;">➕</button>
-                    </td>
+                    <td><button onclick="abrirModal(${p.id})">➕</button></td>
                 </tr>
-            `;
-        });
-    } catch (erro) {
-        console.error("Erro detalhado:", erro);
-    }
-}
+            `).join('');
+        }
 
-// Isso garante que a função rode assim que a página abrir
-window.onload = carregarCatalogo;
+        function filtrarCatalogo() {
+            const termo = document.getElementById('filtroCatalogo').value.toLowerCase();
+            const filtrados = produtosDoBanco.filter(p => 
+                p.nome.toLowerCase().includes(termo) || p.id.toString().includes(termo)
+            );
+            renderizarCatalogo(filtrados);
+        }
 
-function copiarRecibo() {
-    const texto = document.getElementById('textoRecibo').innerText;
-    navigator.clipboard.writeText(texto).then(() => {
-        alert("Cupom copiado! Agora é só colar no WhatsApp do cliente.");
-    });
-}
-function resetarPDV() {
-    carrinho = [];
-    formaPagamento = "";
-    total = 0;
-    document.getElementById('valorRecebido').value = '';
-    document.getElementById('secaoTroco').style.display = 'none';
-    document.querySelectorAll('.btn-pgto').forEach(btn => btn.classList.remove('ativo'));
-    atualizarInterface();
-}
-        
+        // Lógica do Modal
+        function abrirModal(id) {
+            produtoSelecionadoNoMomento = produtosDoBanco.find(p => p.id === id);
+            document.getElementById('nomeProdutoModal').innerText = produtoSelecionadoNoMomento.nome;
+            document.getElementById('qtdManual').value = 1;
+            document.getElementById('modalQtd').style.display = 'flex';
+            setTimeout(() => document.getElementById('qtdManual').select(), 100);
+        }
 
-        // Atalho de teclado: F2 finaliza
-        window.addEventListener('keydown', (e) => {
-            if(e.key === 'F2') finalizarVenda();
-        });
+        function fecharModal() {
+            document.getElementById('modalQtd').style.display = 'none';
+            produtoSelecionadoNoMomento = null;
+        }
+
+        function confirmarQtd() {
+            const qtd = parseInt(document.getElementById('qtdManual').value) || 1;
+            adicionarAoCarrinho(produtoSelecionadoNoMomento, qtd);
+            fecharModal();
+        }
+
+        // Lógica de Adição
+        function adicionarManual() {
+            const busca = document.getElementById('inputProduto').value;
+            const qtd = parseInt(document.getElementById('inputQtdRapido').value) || 1;
+            const produto = produtosDoBanco.find(p => p.nome.toLowerCase() === busca.toLowerCase());
+
+            if (produto) {
+                adicionarAoCarrinho(produto, qtd);
+                document.getElementById('inputProduto').value = '';
+                document.getElementById('inputQtdRapido').value = 1;
+                document.getElementById('inputProduto').focus();
+            } else {
+                alert("Produto não selecionado!");
+            }
+        }
+
+        function adicionarAoCarrinho(produto, qtd) {
+            const precoFinal = calcularPrecoPromocional(produto.nome, qtd, produto.preco);
+            const subtotal = precoFinal * qtd;
+
+            if(precoFinal < produto.preco) {
+                mostrarAvisoPromo(`${produto.nome} com preço especial: R$ ${precoFinal.toFixed(2)}`);
+            }
+
+            carrinho.push({
+                ...produto,
+                nomeDisplay: produto.nome + (precoFinal < produto.preco ? " ⭐" : ""),
+                precoUnitario: precoFinal,
+                quantidade: qtd,
+                subtotal: subtotal
+            });
+
+            atualizarInterface();
+        }
+
+        function calcularPrecoPromocional(nome, qtd, precoOriginal) {
+            const n = nome.toLowerCase();
+            if (n.includes("heineken")) return 7.99;
+            const marcasPromo = ["antarctica", "brahma", "imperio"];
+            if (marcasPromo.some(m => n.includes(m)) && qtd >= 2) return 5.00;
+            return precoOriginal;
+        }
+
+        function atualizarInterface() {
+            const corpo = document.getElementById('corpoCarrinho');
+            totalVenda = 0;
+
+            corpo.innerHTML = carrinho.map((item, index) => {
+                totalVenda += item.subtotal;
+                return `
+                    <tr>
+                        <td>${item.nomeDisplay}</td>
+                        <td>${item.quantidade}</td>
+                        <td>R$ ${item.precoUnitario.toFixed(2)}</td>
+                        <td>R$ ${item.subtotal.toFixed(2)}</td>
+                        <td><button onclick="removerItem(${index})" style="background:none; border:none; color:var(--danger); font-size:1.2rem;">🗑️</button></td>
+                    </tr>
+                `;
+            }).join('');
+
+            document.getElementById('valorTotal').innerText = `R$ ${totalVenda.toFixed(2)}`;
+            if(formaPagamento === 'Dinheiro') calcularTroco();
+        }
+
+        function removerItem(index) {
+            carrinho.splice(index, 1);
+            atualizarInterface();
+        }
+
+        // Pagamento
+        function setPagamento(metodo, btn) {
+            formaPagamento = metodo;
+            document.querySelectorAll('.btn-pgto').forEach(b => b.classList.remove('ativo'));
+            btn.classList.add('ativo');
+
+            const secao = document.getElementById('secaoTroco');
+            secao.style.display = metodo === 'Dinheiro' ? 'block' : 'none';
+            if(metodo === 'Dinheiro') document.getElementById('valorRecebido').focus();
+        }
+
+        function calcularTroco() {
+            const recebido = parseFloat(document.getElementById('valorRecebido').value) || 0;
+            const troco = recebido - totalVenda;
+            const display = document.getElementById('trocoResultado');
+            display.innerText = `R$ ${Math.max(0, troco).toFixed(2)}`;
+            display.style.color = troco >= 0 ? "#27ae60" : "#f1c40f";
+        }
+
+        function finalizarVenda() {
+            if (carrinho.length === 0) return alert("Adicione produtos primeiro!");
+            if (!formaPagamento) return alert("Escolha o pagamento!");
+
+            let recebido = 0;
+            if (formaPagamento === 'Dinheiro') {
+                recebido = parseFloat(document.getElementById('valorRecebido').value) || 0;
+                if (recebido < totalVenda) return alert("Valor insuficiente!");
+            }
+
+            gerarRecibo(recebido);
+            
+            // Enviar ao backend
+            fetch(`${API_URL}/vendas`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    total: totalVenda,
+                    pagamento: formaPagamento,
+                    itens: carrinho
+                })
+            }).catch(e => console.error("Erro ao salvar venda:", e));
+
+            alert("Venda Finalizada com Sucesso!");
+            resetarPDV();
+        }
+
+        function gerarRecibo(recebido) {
+            const troco = recebido > 0 ? recebido - totalVenda : 0;
+            let texto = `==== É A BOA DISTRIBUIDORA ====\n`;
+            texto += `Data: ${new Date().toLocaleString()}\n`;
+            texto += `----------------------------------\n`;
+            texto += `PRODUTO         QTD   SUBTOTAL\n`;
+            
+            carrinho.forEach(item => {
+                const nomeCurto = item.nome.substring(0, 15).padEnd(16, " ");
+                texto += `${nomeCurto} ${item.quantidade.toString().padEnd(5)} R$ ${item.subtotal.toFixed(2)}\n`;
+            });
+
+            texto += `----------------------------------\n`;
+            texto += `TOTAL: R$ ${totalVenda.toFixed(2)}\n`;
+            texto += `PAGAMENTO: ${formaPagamento}\n`;
+            if(recebido > 0) {
+                texto += `RECEBIDO: R$ ${recebido.toFixed(2)}\n`;
+                texto += `TROCO:    R$ ${troco.toFixed(2)}\n`;
+            }
+            texto += `==================================\n`;
+            texto += `OBRIGADO PELA PREFERÊNCIA!`;
+
+            document.getElementById('textoRecibo').innerText = texto;
+            document.getElementById('areaRecibo').style.display = 'block';
+        }
+
+        function copiarRecibo() {
+            const texto = document.getElementById('textoRecibo').innerText;
+            // Fallback para document.execCommand se navigator.clipboard falhar
+            const el = document.createElement('textarea');
+            el.value = texto;
+            document.body.appendChild(el);
+            el.select();
+            document.execCommand('copy');
+            document.body.removeChild(el);
+            alert("Cupom copiado para o WhatsApp!");
+        }
+
+        function resetarPDV() {
+            carrinho = [];
+            formaPagamento = '';
+            totalVenda = 0;
+            document.getElementById('valorRecebido').value = '';
+            document.querySelectorAll('.btn-pgto').forEach(b => b.classList.remove('ativo'));
+            document.getElementById('secaoTroco').style.display = 'none';
+            atualizarInterface();
+        }
+
+        function mostrarAvisoPromo(mensagem) {
+            const alerta = document.createElement('div');
+            alerta.className = 'alerta-promo';
+            alerta.innerHTML = `🎉 ${mensagem}`;
+            document.body.appendChild(alerta);
+            setTimeout(() => {
+                alerta.style.opacity = '0';
+                setTimeout(() => alerta.remove(), 500);
+            }, 3000);
+        }
     </script>
-
-    <div id="areaRecibo" style="display: none;">
-    <pre id="textoRecibo" style="font-family: monospace; background: white; padding: 10px;"></pre>
-    <button onclick="copiarRecibo()" style="background: #25d366; color: white; border: none; padding: 10px; width: 100%; cursor: pointer;">
-        Copiado para WhatsApp 📱
-    </button>
-<div id="modalQtd" class="modal-qtd">
-    <div class="modal-conteudo">
-        <h3 id="nomeProdutoModal">Produto</h3>
-        <p>Informe a quantidade:</p>
-        <input type="number" id="qtdManual" value="1" min="1" onkeypress="if(event.key==='Enter') confirmarQtd()">
-        <button class="btn-confirmar" onclick="confirmarQtd()">Confirmar (Enter)</button>
-        <button onclick="document.getElementById('modalQtd').style.display='none'" style="margin-top:10px; border:none; background:none; color:gray; cursor:pointer;">Cancelar</button>
-    </div>
-</div>
-
-</div>
 </body>
 </html>
