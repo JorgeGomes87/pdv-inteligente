@@ -1,0 +1,490 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SysOn Pro - Distribuidora de Bebidas</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --bg-main: #f4f7f6;
+            --sidebar-dark: #1a1c23;
+            --syson-blue: #0056b3;
+            --syson-yellow: #ffcc00;
+            --syson-orange: #ff8800;
+            --success: #28a745;
+            --danger: #dc3545;
+            --text-dark: #333;
+            --white: #ffffff;
+        }
+
+        * { box-sizing: border-box; font-family: 'Roboto', 'Segoe UI', sans-serif; }
+
+        body {
+            margin: 0;
+            background-color: var(--bg-main);
+            color: var(--text-dark);
+            height: 100vh;
+            display: flex;
+            overflow: hidden;
+        }
+
+        /* --- SIDEBAR DE NAVEGAÇÃO --- */
+        .sidebar {
+            width: 90px;
+            background: var(--sidebar-dark);
+            display: flex;
+            flex-direction: column;
+            padding: 15px 0;
+            gap: 10px;
+            align-items: center;
+            z-index: 10;
+        }
+
+        .nav-item {
+            width: 70px;
+            height: 70px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: #999;
+            text-decoration: none;
+            font-size: 0.7rem;
+            border-radius: 10px;
+            transition: all 0.3s;
+            cursor: pointer;
+            border: none;
+            background: transparent;
+        }
+
+        .nav-item i { font-size: 1.6rem; margin-bottom: 5px; }
+        .nav-item:hover, .nav-item.active {
+            background: var(--syson-blue);
+            color: white;
+        }
+
+        /* --- LAYOUT PRINCIPAL --- */
+        .pdv-container {
+            flex: 1;
+            display: grid;
+            grid-template-columns: 1fr 450px;
+            background: #e9ecef;
+        }
+
+        /* --- LADO ESQUERDO: LANÇAMENTO --- */
+        .venda-main {
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .header-caixa {
+            background: var(--syson-blue);
+            color: white;
+            padding: 15px 25px;
+            border-radius: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .caixa-info { display: flex; align-items: center; gap: 15px; }
+        .caixa-info strong { font-size: 1.2rem; }
+
+        .search-container {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+            border-left: 10px solid var(--syson-orange);
+        }
+
+        .input-group label {
+            display: block;
+            font-weight: bold;
+            color: var(--syson-blue);
+            margin-bottom: 10px;
+            font-size: 0.9rem;
+        }
+
+        .main-input {
+            width: 100%;
+            font-size: 3rem;
+            border: none;
+            border-bottom: 4px solid #ddd;
+            outline: none;
+            color: #222;
+            font-weight: 900;
+        }
+
+        .main-input:focus { border-color: var(--syson-blue); }
+
+        .grid-atalhos-rapidos {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .btn-atalho {
+            background: white;
+            border: 2px solid #ddd;
+            padding: 20px;
+            border-radius: 12px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-atalho:hover {
+            border-color: var(--syson-blue);
+            background: #f0f7ff;
+            transform: translateY(-3px);
+        }
+
+        .btn-atalho i { font-size: 2rem; color: var(--syson-blue); margin-bottom: 10px; display: block; }
+        .btn-atalho span { font-weight: bold; font-size: 0.8rem; }
+
+        /* --- LADO DIREITO: CUPOM/VALORES --- */
+        .pdv-sidebar {
+            background: white;
+            border-left: 1px solid #ddd;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .cupom-header {
+            background: #333;
+            color: var(--syson-yellow);
+            padding: 20px;
+            text-align: center;
+            font-weight: bold;
+            font-size: 1.1rem;
+            letter-spacing: 2px;
+        }
+
+        .lista-produtos {
+            flex: 1;
+            overflow-y: auto;
+            padding: 0;
+            background: #fff;
+        }
+
+        .produto-row {
+            padding: 15px 20px;
+            border-bottom: 1px dashed #ccc;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .prod-info b { display: block; font-size: 1rem; color: #111; }
+        .prod-info span { font-size: 0.85rem; color: #666; }
+
+        .prod-preco {
+            text-align: right;
+            font-weight: bold;
+            font-size: 1.1rem;
+        }
+
+        .footer-valores {
+            background: #f8f9fa;
+            border-top: 2px solid #ddd;
+            padding: 25px;
+        }
+
+        .total-container {
+            background: var(--sidebar-dark);
+            color: var(--syson-yellow);
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .total-label { font-size: 1rem; display: block; opacity: 0.8; }
+        .total-valor { font-size: 4rem; font-weight: 900; line-height: 1; }
+
+        .btn-finalizar {
+            width: 100%;
+            background: var(--success);
+            color: white;
+            border: none;
+            padding: 20px;
+            font-size: 1.8rem;
+            font-weight: bold;
+            border-radius: 8px;
+            cursor: pointer;
+            box-shadow: 0 4px 0 #1e7e34;
+            transition: all 0.1s;
+        }
+
+        .btn-finalizar:active { transform: translateY(3px); box-shadow: none; }
+
+        /* --- BARRA DE STATUS/ATALHOS --- */
+        .status-bar {
+            position: fixed;
+            bottom: 0;
+            left: 90px;
+            right: 0;
+            background: #222;
+            color: #eee;
+            padding: 10px 20px;
+            display: flex;
+            gap: 25px;
+            font-size: 0.8rem;
+        }
+
+        .status-bar kbd {
+            background: #555;
+            color: var(--syson-yellow);
+            padding: 2px 6px;
+            border-radius: 4px;
+            margin-right: 5px;
+        }
+
+        /* MODAL */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.8);
+            z-index: 100;
+            align-items: center; justify-content: center;
+        }
+
+        .modal-content {
+            background: white;
+            width: 450px;
+            border-radius: 15px;
+            padding: 30px;
+            text-align: center;
+        }
+
+    </style>
+</head>
+<body>
+
+    <!-- Navegação Lateral Estilo SysOn -->
+    <aside class="sidebar">
+        <div style="margin-bottom: 30px; color: var(--syson-yellow);">
+            <i class="fas fa-beer-mug-empty fa-3x"></i>
+        </div>
+        <button class="nav-item active">
+            <i class="fas fa-desktop"></i>
+            <span>VENDAS</span>
+        </button>
+        <button class="nav-item">
+            <i class="fas fa-boxes-stacked"></i>
+            <span>ESTOQUE</span>
+        </button>
+        <button class="nav-item">
+            <i class="fas fa-file-invoice-dollar"></i>
+            <span>CAIXA</span>
+        </button>
+        <button class="nav-item">
+            <i class="fas fa-users"></i>
+            <span>CLIENTES</span>
+        </button>
+        <button class="nav-item">
+            <i class="fas fa-chart-line"></i>
+            <span>RELATÓRIO</span>
+        </button>
+        <button class="nav-item" style="margin-top: auto; color: var(--danger);">
+            <i class="fas fa-sign-out-alt"></i>
+            <span>SAIR</span>
+        </button>
+    </aside>
+
+    <div class="pdv-container">
+        <!-- ÁREA DE LANÇAMENTO -->
+        <main class="venda-main">
+            <header class="header-caixa">
+                <div class="caixa-info">
+                    <i class="fas fa-user-circle fa-2x"></i>
+                    <div>
+                        <strong>OPERADOR: ADMINISTRADOR</strong><br>
+                        <small>CAIXA LIVRE - TERMINAL 01</small>
+                    </div>
+                </div>
+                <div style="text-align: right;">
+                    <span id="data-hora" style="font-weight: bold;">00/00/0000 - 00:00:00</span>
+                </div>
+            </header>
+
+            <div class="search-container">
+                <div class="input-group">
+                    <label><i class="fas fa-barcode"></i> CÓDIGO DE BARRAS OU NOME DO PRODUTO (F1)</label>
+                    <input type="text" id="inputVenda" class="main-input" placeholder="0000000000000" autofocus>
+                </div>
+                <div style="display: flex; gap: 30px; margin-top: 20px;">
+                    <div style="flex: 1;">
+                        <label>QUANTIDADE</label>
+                        <input type="number" id="qtdInput" value="1" style="width: 100%; font-size: 2rem; border: none; border-bottom: 2px solid #ccc; outline: none; font-weight: bold;">
+                    </div>
+                    <div style="flex: 1;">
+                        <label>VALOR UNITÁRIO</label>
+                        <div id="unitario" style="font-size: 2rem; font-weight: bold; color: var(--syson-blue);">R$ 0,00</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="grid-header" style="margin-top: 10px;">
+                <h3 style="color: var(--syson-blue);"><i class="fas fa-star"></i> ITENS RÁPIDOS / ATALHOS</h3>
+            </div>
+
+            <div class="grid-atalhos-rapidos">
+                <div class="btn-atalho" onclick="addRapido('Cerveja Skol Lata', 4.50)">
+                    <i class="fas fa-beer"></i>
+                    <span>SKOL LATA</span>
+                </div>
+                <div class="btn-atalho" onclick="addRapido('Heineken 600ml', 14.00)">
+                    <i class="fas fa-wine-bottle"></i>
+                    <span>HEINEKEN 600</span>
+                </div>
+                <div class="btn-atalho" onclick="addRapido('Coca-Cola 2L', 11.50)">
+                    <i class="fas fa-bottle-water"></i>
+                    <span>COCA 2L</span>
+                </div>
+                <div class="btn-atalho" onclick="addRapido('Água S/ Gás', 2.50)">
+                    <i class="fas fa-droplet"></i>
+                    <span>ÁGUA 500ML</span>
+                </div>
+                <div class="btn-atalho" onclick="addRapido('Gelo 5kg', 12.00)">
+                    <i class="fas fa-icicles"></i>
+                    <span>GELO 5KG</span>
+                </div>
+                <div class="btn-atalho" onclick="addRapido('Carvão 4kg', 18.00)">
+                    <i class="fas fa-fire"></i>
+                    <span>CARVÃO 4KG</span>
+                </div>
+                <div class="btn-atalho">
+                    <i class="fas fa-plus-circle"></i>
+                    <span>VER TODOS</span>
+                </div>
+            </div>
+        </main>
+
+        <!-- LADO DIREITO: CUPOM -->
+        <aside class="pdv-sidebar">
+            <div class="cupom-header">EXTRATO DE VENDA</div>
+            
+            <div class="lista-produtos" id="carrinho">
+                <!-- Itens dinâmicos -->
+            </div>
+
+            <div class="footer-valores">
+                <div class="total-container">
+                    <span class="total-label">TOTAL A PAGAR</span>
+                    <span class="total-valor" id="txtTotal">R$ 0,00</span>
+                </div>
+
+                <button class="btn-finalizar" onclick="abrirPagamento()">
+                    <i class="fas fa-check-double"></i> FINALIZAR (F2)
+                </button>
+            </div>
+        </aside>
+    </div>
+
+    <!-- STATUS BAR -->
+    <footer class="status-bar">
+        <span><kbd>F1</kbd> BUSCAR PRODUTO</span>
+        <span><kbd>F2</kbd> FINALIZAR VENDA</span>
+        <span><kbd>F3</kbd> ALTERAR QTD</span>
+        <span><kbd>F4</kbd> CANCELAR ITEM</span>
+        <span><kbd>F10</kbd> DAR DESCONTO</span>
+        <span style="margin-left: auto; color: var(--syson-yellow);">SYSON PRO v2.5 - DISTRIBUIDORA</span>
+    </footer>
+
+    <!-- MODAL PAGAMENTO -->
+    <div id="modalPagamento" class="modal">
+        <div class="modal-content">
+            <h2 style="color: var(--syson-blue);">FINALIZAR VENDA</h2>
+            <div class="total-container" style="background: var(--syson-blue); margin: 20px 0;">
+                <span id="totalModal" style="font-size: 3rem; font-weight: 900; color: white;">R$ 0,00</span>
+            </div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                <button class="btn-atalho" style="background: #e1f5fe;">DINHEIRO (D)</button>
+                <button class="btn-atalho" style="background: #f1f8e9;">PIX (P)</button>
+                <button class="btn-atalho" style="background: #fff3e0;">CARTÃO (C)</button>
+                <button class="btn-atalho" style="background: #fce4ec;">PRAZO (F)</button>
+            </div>
+            <button class="btn-finalizar" style="margin-top: 20px;" onclick="fecharPagamento()">CONCLUIR (Enter)</button>
+            <p style="margin-top: 15px; font-size: 0.8rem; color: #777;">ESC para cancelar</p>
+        </div>
+    </div>
+
+    <script>
+        let carrinho = [];
+        let totalVenda = 0;
+
+        function addRapido(nome, preco) {
+            const qtd = parseInt(document.getElementById('qtdInput').value) || 1;
+            const subtotal = preco * qtd;
+            
+            carrinho.push({ nome, qtd, preco, subtotal });
+            document.getElementById('qtdInput').value = 1;
+            renderCarrinho();
+        }
+
+        function renderCarrinho() {
+            const container = document.getElementById('carrinho');
+            totalVenda = 0;
+            
+            container.innerHTML = carrinho.map((item, index) => {
+                totalVenda += item.subtotal;
+                return `
+                    <div class="produto-row">
+                        <div class="prod-info">
+                            <b>${index + 1}. ${item.nome.toUpperCase()}</b>
+                            <span>${item.qtd} UN x R$ ${item.preco.toFixed(2)}</span>
+                        </div>
+                        <div class="prod-preco">R$ ${item.subtotal.toFixed(2)}</div>
+                    </div>
+                `;
+            }).join('');
+
+            document.getElementById('txtTotal').innerText = `R$ ${totalVenda.toFixed(2)}`;
+            document.getElementById('totalModal').innerText = `R$ ${totalVenda.toFixed(2)}`;
+            container.scrollTop = container.scrollHeight;
+        }
+
+        function abrirPagamento() {
+            if(carrinho.length === 0) return alert("Carrinho vazio!");
+            document.getElementById('modalPagamento').style.display = 'flex';
+        }
+
+        function fecharPagamento() {
+            alert("Venda realizada com sucesso! Imprimindo cupom...");
+            carrinho = [];
+            renderCarrinho();
+            document.getElementById('modalPagamento').style.display = 'none';
+        }
+
+        // Teclado
+        window.addEventListener('keydown', (e) => {
+            if (e.key === 'F1') { e.preventDefault(); document.getElementById('inputVenda').focus(); }
+            if (e.key === 'F2') { e.preventDefault(); abrirPagamento(); }
+            if (e.key === 'Escape') { document.getElementById('modalPagamento').style.display = 'none'; }
+            if (e.key === 'Enter') {
+                if(document.getElementById('modalPagamento').style.display === 'flex') {
+                    fecharPagamento();
+                } else if(document.activeElement.id === 'inputVenda' && document.getElementById('inputVenda').value !== "") {
+                    addRapido(document.getElementById('inputVenda').value, (Math.random() * 20) + 5);
+                    document.getElementById('inputVenda').value = "";
+                }
+            }
+        });
+
+        // Relógio
+        setInterval(() => {
+            const now = new Date();
+            document.getElementById('data-hora').innerText = now.toLocaleString('pt-BR');
+        }, 1000);
+
+    </script>
+</body>
+</html>
