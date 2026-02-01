@@ -48,6 +48,24 @@ function mostrarSecao(sec) {
     document.getElementById("sec-" + sec).style.display = "block";
 }
 
+import PDFDocument from "pdfkit";
+
+router.get("/pdf", async (req,res)=>{
+  const doc = new PDFDocument();
+  res.setHeader("Content-Type","application/pdf");
+  doc.pipe(res);
+
+  doc.fontSize(20).text("Relatório de Vendas", {align:"center"});
+  const [vendas] = await db.query("SELECT * FROM vendas");
+
+  vendas.forEach(v=>{
+    doc.text(`Data: ${v.data} | Total: R$ ${v.total}`);
+  });
+
+  doc.end();
+});
+
+
 /**
  * Inicializa as tabelas se não existirem e insere dados iniciais.
 */
