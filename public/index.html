@@ -332,6 +332,10 @@ async function carregarRelatorio(tipo) {
 
     <script>
 
+        if (res.formaPagamento === "dinheiro") {
+  alert(`Troco: R$ ${res.troco.toFixed(2)}`);
+}
+
 if("serviceWorker" in navigator){
   navigator.serviceWorker.register("sw.js");
 }
