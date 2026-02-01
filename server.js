@@ -1,9 +1,12 @@
 const express = require('express');
 const cors = require('cors');
+const app = express();
+app.use(cors());
+app.use(express.json());
 const path = require('path');
 const { abrirBanco } = require('./database');
 
-const app = express();
+
 const PORTA = 3000;
 
 // Configurações
