@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>PDV Mobile & Desktop - E A BOA</title>
+    <title>PDV Inteligente - E A BOA</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         :root { 
@@ -26,36 +26,71 @@
             display: flex;
             flex-direction: column;
             height: 100vh;
-            overflow: hidden; /* Evita scroll na página inteira, controlamos nos containers */
+            overflow: hidden;
+        }
+
+        /* Navegação por Abas */
+        .nav-tabs {
+            display: flex;
+            background: var(--primary);
+            padding: 10px 15px 0 15px;
+            gap: 5px;
+            z-index: 200;
+            overflow-x: auto;
+        }
+
+        .tab-btn {
+            padding: 12px 15px;
+            border: none;
+            background: rgba(255,255,255,0.1);
+            color: white;
+            border-radius: 12px 12px 0 0;
+            cursor: pointer;
+            font-weight: 600;
+            white-space: nowrap;
+            transition: all 0.3s;
+            font-size: 0.9rem;
+        }
+
+        .tab-btn.active {
+            background: var(--bg);
+            color: var(--primary);
         }
 
         /* Layout Responsivo Principal */
         .app-container {
             display: grid;
             grid-template-columns: 1fr 400px;
-            height: 100%;
+            height: calc(100% - 60px);
             width: 100%;
+        }
+
+        .view-section {
+            display: none;
+            height: 100%;
+            overflow-y: auto;
+            padding: 15px;
+        }
+
+        .view-section.active {
+            display: flex;
+            flex-direction: column;
         }
 
         /* Responsividade para Celulares */
         @media (max-width: 900px) {
-            .app-container {
-                grid-template-columns: 1fr;
-                grid-template-rows: 1fr auto;
-            }
+            .app-container { grid-template-columns: 1fr; }
             .caixa-resumo {
-                height: 60vh;
+                height: 75vh;
                 border-radius: 30px 30px 0 0 !important;
                 position: fixed;
-                bottom: -52vh; /* Escondido parcialmente */
+                bottom: -67vh;
                 left: 0;
                 right: 0;
                 z-index: 100;
                 transition: bottom 0.4s cubic-bezier(0.4, 0, 0.2, 1);
             }
-            .caixa-resumo.aberto {
-                bottom: 0;
-            }
+            .caixa-resumo.aberto { bottom: 0; }
             .handle-mobile {
                 display: block !important;
                 width: 50px;
@@ -66,23 +101,7 @@
             }
         }
 
-        /* Lado Esquerdo: Busca e Catálogo */
-        .sessao-vendas {
-            display: flex;
-            flex-direction: column;
-            padding: 15px;
-            gap: 15px;
-            overflow-y: auto;
-        }
-
-        .caixa-busca-wrapper {
-            position: sticky;
-            top: 0;
-            z-index: 50;
-            background: var(--bg);
-            padding-bottom: 10px;
-        }
-
+        /* Busca e Catálogo */
         .caixa-busca {
             background: white;
             padding: 12px 20px;
@@ -90,24 +109,27 @@
             display: flex;
             gap: 10px;
             box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+            margin-bottom: 15px;
         }
 
-        .input-busca {
-            flex: 1;
-            border: none;
-            font-size: 1.2rem;
+        .input-padrao {
+            width: 100%;
+            border: 2px solid #e2e8f0;
+            padding: 12px;
+            border-radius: 12px;
+            font-size: 1rem;
             outline: none;
-            background: transparent;
+            margin-bottom: 10px;
         }
 
         .grid-produtos {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
             gap: 12px;
-            padding-bottom: 100px; /* Espaço para não ficar atrás do botão mobile */
+            padding-bottom: 100px;
         }
 
-        /* Card de Produto Adaptável */
+        /* Card de Produto */
         .card-produto {
             background: var(--card-bg);
             border-radius: 18px;
@@ -117,14 +139,11 @@
             cursor: pointer;
             border: 2px solid transparent;
             transition: all 0.2s;
-            display: flex;
-            flex-direction: column;
-            gap: 5px;
         }
 
-        .card-produto:active { transform: scale(0.95); background: #f8fafc; }
-        .card-produto .nome { font-weight: 700; font-size: 1.1rem; line-height: 1.2; }
-        .card-produto .preco { color: var(--success); font-weight: 800; font-size: 1.3rem; }
+        .card-produto:active { transform: scale(0.95); }
+        .card-produto .nome { font-weight: 700; font-size: 1rem; display: block; }
+        .card-produto .preco { color: var(--success); font-weight: 800; font-size: 1.2rem; }
 
         /* Lado Direito: Resumo (Carrinho) */
         .caixa-resumo {
@@ -148,60 +167,42 @@
         .item-carrinho {
             display: flex;
             justify-content: space-between;
-            padding: 15px 0;
+            padding: 12px 0;
             border-bottom: 1px solid rgba(255,255,255,0.1);
-            font-size: 1rem;
         }
 
         .total-sessao {
             background: rgba(255,255,255,0.05);
-            padding: 20px;
+            padding: 15px;
             border-radius: 15px;
             text-align: center;
             margin-bottom: 15px;
         }
 
-        .total-texto { font-size: 0.9rem; opacity: 0.8; letter-spacing: 1px; }
-        .total-valor { font-size: 2.8rem; font-weight: 900; color: var(--warning); display: block; }
+        .total-valor { font-size: 2.2rem; font-weight: 900; color: var(--warning); display: block; }
 
-        /* Botões de Pagamento */
-        .grid-pagamento {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 8px;
-            margin-bottom: 15px;
-        }
-
-        .btn-pgto {
-            background: rgba(255,255,255,0.1);
-            border: 2px solid transparent;
-            color: white;
-            padding: 12px 5px;
-            border-radius: 12px;
-            cursor: pointer;
-            font-size: 0.75rem;
-            text-align: center;
-            display: flex;
-            flex-direction: column;
-            gap: 5px;
-        }
-
-        .btn-pgto i { font-size: 1.2rem; }
-        .btn-pgto.selecionado { background: var(--accent); border-color: white; }
-
-        .btn-finalizar {
-            background: var(--success);
-            color: white;
-            border: none;
-            padding: 20px;
+        /* Estilos de Tabelas e Listas */
+        .tabela-container {
+            background: white;
             border-radius: 15px;
-            font-size: 1.4rem;
-            font-weight: 800;
-            cursor: pointer;
+            overflow: hidden;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+        }
+
+        .tabela-estoque {
             width: 100%;
+            border-collapse: collapse;
         }
 
-        /* Modal Quantidade */
+        .tabela-estoque th, .tabela-estoque td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid #f1f5f9;
+        }
+
+        .tabela-estoque th { background: #f8fafc; font-size: 0.8rem; text-transform: uppercase; color: #64748b; }
+
+        /* Modal */
         .modal {
             display: none; 
             position: fixed; 
@@ -213,108 +214,151 @@
             padding: 20px;
         }
         .modal-corpo {
-            background: white; 
-            padding: 30px; 
-            border-radius: 25px; 
-            width: 100%;
-            max-width: 350px;
-            text-align: center;
-        }
-        .controles-qtd {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 25px;
-            margin: 25px 0;
-        }
-        .btn-roda {
-            width: 60px; height: 60px; border-radius: 50%; border: none;
-            background: #e2e8f0; font-size: 1.5rem; font-weight: bold;
+            background: white; padding: 30px; border-radius: 25px; 
+            width: 100%; max-width: 350px; text-align: center;
         }
 
-        /* Botão Flutuante Mobile para ver Carrinho */
+        .btn-acao {
+            background: var(--success); color: white; border: none; padding: 15px;
+            border-radius: 12px; font-size: 1.1rem; font-weight: 700; cursor: pointer; width: 100%;
+        }
+
+        .btn-danger { background: var(--danger); }
+
         .fab-carrinho {
-            display: none;
-            position: fixed;
-            bottom: 20px;
-            right: 20px;
-            background: var(--accent);
-            color: white;
-            width: 65px;
-            height: 65px;
-            border-radius: 50%;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.5rem;
-            box-shadow: 0 10px 20px rgba(0,0,0,0.3);
-            z-index: 150;
-            border: none;
+            display: none; position: fixed; bottom: 20px; right: 20px;
+            background: var(--accent); color: white; width: 60px; height: 60px;
+            border-radius: 50%; align-items: center; justify-content: center;
+            font-size: 1.5rem; z-index: 150; border: none;
         }
 
-        @media (max-width: 900px) {
-            .fab-carrinho { display: flex; }
+        @media (max-width: 900px) { .fab-carrinho { display: flex; } }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
         }
+
+        .stat-card {
+            background: white;
+            padding: 20px;
+            border-radius: 15px;
+            text-align: center;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+
+        .stat-card h4 { margin: 0; color: #64748b; font-size: 0.9rem; }
+        .stat-card p { margin: 5px 0 0 0; font-size: 1.5rem; font-weight: 800; color: var(--accent); }
 
     </style>
 </head>
 <body>
 
-    <div class="app-container">
-        <!-- ÁREA DE VENDAS -->
-        <div class="sessao-vendas">
-            <div class="caixa-busca-wrapper">
-                <div class="caixa-busca">
-                    <i class="fas fa-search" style="color: #94a3b8; align-self: center;"></i>
-                    <input type="text" id="busca" class="input-busca" placeholder="Buscar bebida..." onkeyup="filtrar()">
-                </div>
-            </div>
+    <div class="nav-tabs">
+        <button class="tab-btn active" onclick="mudarAba('venda')"><i class="fas fa-cash-register"></i> Venda</button>
+        <button class="tab-btn" onclick="mudarAba('cadastro')"><i class="fas fa-boxes"></i> Estoque</button>
+        <button class="tab-btn" onclick="mudarAba('relatorio')"><i class="fas fa-chart-line"></i> Relatórios</button>
+    </div>
 
-            <div class="grid-produtos" id="listaProds">
-                <!-- Cards injetados aqui -->
+    <div class="app-container">
+        
+        <!-- VISÃO DE VENDAS -->
+        <div id="view-venda" class="view-section active">
+            <div class="caixa-busca">
+                <i class="fas fa-search" style="color: #94a3b8; align-self: center;"></i>
+                <input type="text" id="busca" class="input-padrao" style="border:none; margin:0" placeholder="Buscar produto..." onkeyup="filtrar()">
+            </div>
+            <div class="grid-produtos" id="listaProds"></div>
+        </div>
+
+        <!-- VISÃO DE CADASTRO -->
+        <div id="view-cadastro" class="view-section">
+            <div style="max-width: 800px; margin: 0 auto; width: 100%;">
+                <div style="background:white; padding:20px; border-radius:15px; margin-bottom:20px;">
+                    <h3 style="margin-top:0">Novo Produto</h3>
+                    <input type="text" id="cadNome" class="input-padrao" placeholder="Nome do Produto">
+                    <input type="number" id="cadPreco" class="input-padrao" placeholder="Preço R$">
+                    <button class="btn-acao" onclick="cadastrarProduto()">Salvar Produto</button>
+                </div>
+
+                <h3>Produtos Ativos</h3>
+                <div class="tabela-container">
+                    <table class="tabela-estoque">
+                        <thead>
+                            <tr>
+                                <th>Produto</th>
+                                <th>Cadastro</th>
+                                <th>Preço</th>
+                                <th>Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody id="listaEstoqueTabela"></tbody>
+                    </table>
+                </div>
             </div>
         </div>
 
-        <!-- RESUMO / CHECKOUT -->
+        <!-- VISÃO DE RELATÓRIO -->
+        <div id="view-relatorio" class="view-section">
+            <div style="max-width: 1000px; margin: 0 auto; width: 100%;">
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <h4>Vendas Totais</h4>
+                        <p id="statVendas">R$ 0,00</p>
+                    </div>
+                    <div class="stat-card">
+                        <h4>Itens Vendidos</h4>
+                        <p id="statItens">0</p>
+                    </div>
+                </div>
+
+                <h3>Desempenho por Produto</h3>
+                <div class="tabela-container">
+                    <table class="tabela-estoque">
+                        <thead>
+                            <tr>
+                                <th>Produto</th>
+                                <th>Preço Atual</th>
+                                <th>Qtd. Vendida</th>
+                                <th>Total Bruto</th>
+                            </tr>
+                        </thead>
+                        <tbody id="listaRelatorioTabela"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- CARRINHO -->
         <div class="caixa-resumo" id="menuResumo">
             <div class="handle-mobile" onclick="toggleCarrinho()"></div>
-            
-            <div style="display: flex; justify-content: space-between;">
-                <h2 style="margin:0"><i class="fas fa-shopping-basket"></i> Pedido</h2>
-                <button onclick="limpar()" style="background:none; border:none; color:var(--danger); font-weight:bold; cursor:pointer;">Limpar</button>
+            <div style="display: flex; justify-content: space-between; align-items:center;">
+                <h3 style="margin:0">Carrinho</h3>
+                <button onclick="limpar()" style="background:none; border:none; color:var(--danger); font-weight:bold;">Limpar</button>
             </div>
 
-            <div class="lista-carrinho" id="itensCarrinho">
-                <p style="text-align: center; opacity: 0.4; margin-top: 40px;">Seu carrinho está vazio</p>
-            </div>
+            <div class="lista-carrinho" id="itensCarrinho"></div>
 
             <div class="total-sessao">
-                <span class="total-texto">TOTAL DO PEDIDO</span>
+                <span style="font-size:0.8rem; opacity:0.7">TOTAL</span>
                 <span class="total-valor" id="totalVal">R$ 0,00</span>
             </div>
 
             <div class="grid-pagamento">
-                <div class="btn-pgto" onclick="selecionarP(this, 'Pix')">
-                    <i class="fab fa-pix"></i>Pix
-                </div>
-                <div class="btn-pgto" onclick="selecionarP(this, 'Dinheiro')">
-                    <i class="fas fa-money-bill"></i>Cash
-                </div>
-                <div class="btn-pgto" onclick="selecionarP(this, 'Cartão')">
-                    <i class="fas fa-credit-card"></i>Cartão
-                </div>
-                <div class="btn-pgto" onclick="selecionarP(this, 'Outros')">
-                    <i class="fas fa-plus"></i>Outro
-                </div>
+                <div class="btn-pgto" onclick="selecionarP(this, 'Pix')"><i class="fab fa-pix"></i>Pix</div>
+                <div class="btn-pgto" onclick="selecionarP(this, 'Dinheiro')"><i class="fas fa-money-bill"></i>Cash</div>
+                <div class="btn-pgto" onclick="selecionarP(this, 'Cartão')"><i class="fas fa-credit-card"></i>Card</div>
+                <div class="btn-pgto" onclick="selecionarP(this, 'Outro')"><i class="fas fa-plus"></i>Outro</div>
             </div>
 
-            <button class="btn-finalizar" onclick="finalizar()">
-                FINALIZAR AGORA
-            </button>
+            <button class="btn-acao" onclick="finalizar()">FINALIZAR VENDA</button>
         </div>
     </div>
 
     <!-- Botão Mobile -->
-    <button class="fab-carrinho" onclick="toggleCarrinho()">
+    <button class="fab-carrinho" id="btnFab" onclick="toggleCarrinho()">
         <i class="fas fa-shopping-cart"></i>
         <span id="badgeQtd" style="position:absolute; top:0; right:0; background:var(--danger); font-size:0.7rem; padding:4px 8px; border-radius:10px;">0</span>
     </button>
@@ -322,41 +366,109 @@
     <!-- Modal Qtd -->
     <div id="modal" class="modal">
         <div class="modal-corpo">
-            <h2 id="mNome" style="margin-top:0">Produto</h2>
-            <div class="controles-qtd">
-                <button class="btn-roda" onclick="mudaQtd(-1)">-</button>
-                <span id="mQtd" style="font-size:2.5rem; font-weight:900;">1</span>
-                <button class="btn-roda" onclick="mudaQtd(1)">+</button>
+            <h2 id="mNome">Produto</h2>
+            <div style="display:flex; justify-content:center; align-items:center; gap:20px; margin:20px 0;">
+                <button onclick="mudaQtd(-1)" style="width:50px; height:50px; border-radius:50%; border:none;">-</button>
+                <span id="mQtd" style="font-size:2rem; font-weight:bold;">1</span>
+                <button onclick="mudaQtd(1)" style="width:50px; height:50px; border-radius:50%; border:none;">+</button>
             </div>
-            <button class="btn-finalizar" onclick="confirmar()">ADICIONAR</button>
-            <p onclick="fechar()" style="margin-top:20px; color:#64748b; cursor:pointer;">Cancelar</p>
+            <button class="btn-acao" onclick="confirmar()">Adicionar</button>
+            <p onclick="fechar()" style="margin-top:15px; color:#64748b; cursor:pointer;">Cancelar</p>
         </div>
     </div>
 
     <script>
+        // Dados Iniciais com rastreamento de vendas
         let produtos = [
-            {id: 1, nome: "Cerveja Lata", preco: 5.50},
-            {id: 2, nome: "Cerveja Latão", preco: 7.00},
-            {id: 3, nome: "Refrigerante 2L", preco: 12.00},
-            {id: 4, nome: "Água S/ Gás", preco: 3.00},
-            {id: 5, nome: "Gelo Pacote", preco: 15.00},
-            {id: 6, nome: "Carvão 4kg", preco: 22.00},
-            {id: 7, nome: "Energético", preco: 10.00},
-            {id: 8, nome: "Vinho Tinto", preco: 35.00}
+            {id: 1, nome: "Cerveja Lata", preco: 5.50, dataCad: "2023-10-01 14:00", vendidas: 0, faturamento: 0},
+            {id: 2, nome: "Cerveja Latão", preco: 7.00, dataCad: "2023-10-01 14:05", vendidas: 0, faturamento: 0},
+            {id: 3, nome: "Refrigerante 2L", preco: 12.00, dataCad: "2023-10-02 09:30", vendidas: 0, faturamento: 0}
         ];
 
         let carrinho = [];
         let selecionado = null;
         let qtdModal = 1;
         let pgto = "";
+        let faturamentoGeral = 0;
+        let itensGeral = 0;
 
         function init() {
-            renderizar(produtos);
+            renderizar();
+            atualizarListaEstoque();
+            atualizarRelatorios();
         }
 
-        function renderizar(lista) {
+        function mudarAba(aba) {
+            document.querySelectorAll('.view-section').forEach(s => s.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            document.getElementById('view-' + aba).classList.add('active');
+            event.currentTarget.classList.add('active');
+
+            const menu = document.getElementById('menuResumo');
+            const fab = document.getElementById('btnFab');
+            
+            if(aba !== 'venda' && window.innerWidth <= 900) {
+                menu.style.display = 'none';
+                fab.style.display = 'none';
+            } else {
+                menu.style.display = 'flex';
+                fab.style.display = window.innerWidth <= 900 ? 'flex' : 'none';
+            }
+        }
+
+        // --- GESTÃO DE PRODUTOS ---
+        function cadastrarProduto() {
+            const nome = document.getElementById('cadNome').value;
+            const preco = parseFloat(document.getElementById('cadPreco').value);
+            if(!nome || isNaN(preco)) return alert("Preencha corretamente!");
+
+            const agora = new Date();
+            const dataStr = agora.toLocaleDateString() + " " + agora.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+
+            produtos.push({
+                id: Date.now(),
+                nome: nome,
+                preco: preco,
+                dataCad: dataStr,
+                vendidas: 0,
+                faturamento: 0
+            });
+
+            document.getElementById('cadNome').value = "";
+            document.getElementById('cadPreco').value = "";
+            renderizar();
+            atualizarListaEstoque();
+            atualizarRelatorios();
+        }
+
+        function apagarProduto(id) {
+            if(!confirm("Tem certeza que deseja apagar este produto? Ele sairá do catálogo de vendas.")) return;
+            produtos = produtos.filter(p => p.id !== id);
+            renderizar();
+            atualizarListaEstoque();
+            atualizarRelatorios();
+        }
+
+        function atualizarListaEstoque() {
+            const tbody = document.getElementById('listaEstoqueTabela');
+            tbody.innerHTML = produtos.map(p => `
+                <tr>
+                    <td><b>${p.nome}</b></td>
+                    <td style="font-size:0.8rem; color:#64748b">${p.dataCad}</td>
+                    <td>R$ ${p.preco.toFixed(2)}</td>
+                    <td>
+                        <button onclick="apagarProduto(${p.id})" style="border:none; background:none; color:var(--danger); cursor:pointer;">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        // --- VENDAS E CARRINHO ---
+        function renderizar() {
             const container = document.getElementById('listaProds');
-            container.innerHTML = lista.map(p => `
+            container.innerHTML = produtos.map(p => `
                 <div class="card-produto" onclick="abrirModal(${p.id})">
                     <span class="nome">${p.nome}</span>
                     <span class="preco">R$ ${p.preco.toFixed(2)}</span>
@@ -366,7 +478,14 @@
 
         function filtrar() {
             const t = document.getElementById('busca').value.toLowerCase();
-            renderizar(produtos.filter(p => p.nome.toLowerCase().includes(t)));
+            const filtrados = produtos.filter(p => p.nome.toLowerCase().includes(t));
+            const container = document.getElementById('listaProds');
+            container.innerHTML = filtrados.map(p => `
+                <div class="card-produto" onclick="abrirModal(${p.id})">
+                    <span class="nome">${p.nome}</span>
+                    <span class="preco">R$ ${p.preco.toFixed(2)}</span>
+                </div>
+            `).join('');
         }
 
         function abrirModal(id) {
@@ -377,12 +496,12 @@
             document.getElementById('modal').style.display = 'flex';
         }
 
-        function fechar() { document.getElementById('modal').style.display = 'none'; }
-
         function mudaQtd(v) {
             qtdModal = Math.max(1, qtdModal + v);
             document.getElementById('mQtd').innerText = qtdModal;
         }
+
+        function fechar() { document.getElementById('modal').style.display = 'none'; }
 
         function confirmar() {
             carrinho.push({ ...selecionado, qtd: qtdModal, sub: selecionado.preco * qtdModal });
@@ -391,38 +510,35 @@
         }
 
         function atualizarCarrinho() {
-            const lista = document.getElementById('itensCarrinho');
-            const totalDisplay = document.getElementById('totalVal');
+            const container = document.getElementById('itensCarrinho');
+            const totalE = document.getElementById('totalVal');
             const badge = document.getElementById('badgeQtd');
 
             if(carrinho.length === 0) {
-                lista.innerHTML = `<p style="text-align: center; opacity: 0.4; margin-top: 40px;">Seu carrinho está vazio</p>`;
-                totalDisplay.innerText = "R$ 0,00";
+                container.innerHTML = `<p style="text-align:center; opacity:0.3; margin-top:30px;">Vazio</p>`;
+                totalE.innerText = "R$ 0,00";
                 badge.innerText = "0";
                 return;
             }
 
-            lista.innerHTML = carrinho.map((item, i) => `
+            container.innerHTML = carrinho.map((item, i) => `
                 <div class="item-carrinho">
-                    <span><b>${item.qtd}x</b> ${item.nome}</span>
-                    <span>R$ ${item.sub.toFixed(2)} <i class="fas fa-trash" onclick="remover(${i})" style="color:var(--danger); margin-left:10px"></i></span>
+                    <span>${item.qtd}x ${item.nome}</span>
+                    <span>R$ ${item.sub.toFixed(2)} <i class="fas fa-times" onclick="removerItem(${i})" style="color:var(--danger); margin-left:10px; cursor:pointer;"></i></span>
                 </div>
             `).join('');
 
             const total = carrinho.reduce((a, b) => a + b.sub, 0);
-            totalDisplay.innerText = `R$ ${total.toFixed(2)}`;
+            totalE.innerText = `R$ ${total.toFixed(2)}`;
             badge.innerText = carrinho.length;
         }
 
-        function remover(i) {
+        function removerItem(i) {
             carrinho.splice(i, 1);
             atualizarCarrinho();
         }
 
-        function limpar() {
-            carrinho = [];
-            atualizarCarrinho();
-        }
+        function limpar() { carrinho = []; atualizarCarrinho(); }
 
         function selecionarP(el, modo) {
             pgto = modo;
@@ -430,19 +546,45 @@
             el.classList.add('selecionado');
         }
 
-        function toggleCarrinho() {
-            document.getElementById('menuResumo').classList.toggle('aberto');
-        }
+        function toggleCarrinho() { document.getElementById('menuResumo').classList.toggle('aberto'); }
 
         function finalizar() {
             if(carrinho.length === 0) return alert("Carrinho vazio!");
-            if(!pgto) return alert("Selecione o pagamento!");
-            
-            alert(`Venda finalizada no ${pgto}!\nTotal: ${document.getElementById('totalVal').innerText}`);
+            if(!pgto) return alert("Escolha o pagamento!");
+
+            // Atualiza estatísticas individuais dos produtos
+            carrinho.forEach(item => {
+                const pOriginal = produtos.find(p => p.id === item.id);
+                if(pOriginal) {
+                    pOriginal.vendidas += item.qtd;
+                    pOriginal.faturamento += item.sub;
+                }
+                faturamentoGeral += item.sub;
+                itensGeral += item.qtd;
+            });
+
+            alert(`Venda finalizada via ${pgto}!\nTotal: R$ ${carrinho.reduce((a, b) => a + b.sub, 0).toFixed(2)}`);
             limpar();
             pgto = "";
             document.querySelectorAll('.btn-pgto').forEach(b => b.classList.remove('selecionado'));
+            atualizarRelatorios();
             if(window.innerWidth <= 900) toggleCarrinho();
+        }
+
+        // --- RELATÓRIOS ---
+        function atualizarRelatorios() {
+            document.getElementById('statVendas').innerText = `R$ ${faturamentoGeral.toFixed(2)}`;
+            document.getElementById('statItens').innerText = itensGeral;
+
+            const tbody = document.getElementById('listaRelatorioTabela');
+            tbody.innerHTML = produtos.map(p => `
+                <tr>
+                    <td>${p.nome}</td>
+                    <td>R$ ${p.preco.toFixed(2)}</td>
+                    <td style="font-weight:bold">${p.vendidas}</td>
+                    <td style="color:var(--success); font-weight:bold">R$ ${p.faturamento.toFixed(2)}</td>
+                </tr>
+            `).join('');
         }
 
         window.onload = init;
