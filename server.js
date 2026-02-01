@@ -11,6 +11,7 @@ app.use(cors());
 app.use(express.json());
 
 // Configuração de Arquivos Estáticos (Frontend)
+// Certifica-te de que o teu ficheiro HTML está dentro da pasta 'public'
 const pastaPublic = path.join(__dirname, 'public');
 app.use(express.static(pastaPublic));
 
@@ -82,7 +83,7 @@ app.post('/api/vendas', async (req, res) => {
         const db = await abrirBanco();
         const data = new Date().toLocaleString("pt-BR");
 
-        // Salva a venda principal
+        // Salva a venda principal na tabela de vendas
         const resultadoVenda = await db.run(
             'INSERT INTO vendas (data, total, metodo_pagamento) VALUES (?, ?, ?)',
             [data, total, metodo_pagamento]
@@ -90,8 +91,8 @@ app.post('/api/vendas', async (req, res) => {
         
         const vendaId = resultadoVenda.lastID;
 
-        // Opcional: Se você tiver uma tabela 'itens_venda', você percorreria o array 'itens' aqui
-        // para salvar cada produto vinculado ao vendaId.
+        // Registo de log para debug no terminal
+        console.log(`Venda nº ${vendaId} registada: R$ ${total} via ${metodo_pagamento}`);
 
         res.json({ mensagem: "Venda salva com sucesso!", id: vendaId });
     } catch (erro) {
@@ -100,13 +101,19 @@ app.post('/api/vendas', async (req, res) => {
     }
 });
 
-// Rota padrão para servir o index.html (SPA)
+// Rota padrão para servir o index.html (Suporte para Single Page Application)
 app.get('*', (req, res) => {
-    res.sendFile(path.join(pastaPublic, 'index.html'));
+    const indexPath = path.join(pastaPublic, 'index.html');
+    res.sendFile(indexPath, (err) => {
+        if (err) {
+            res.status(404).send("Ficheiro index.html não encontrado na pasta public.");
+        }
+    });
 });
 
 // Inicialização do Servidor
-app.listen(PORTA, () => {
-    console.log(`🚀 Servidor rodando em http://localhost:${PORTA}`);
+app.listen(3000, () => {
+    console.log(`🚀 Servidor rodando em http://localhost:${3000}`);
     console.log(`📂 Servindo arquivos estáticos de: ${pastaPublic}`);
+    console.log(`📝 Rotas API prontas para teste em /api/produtos e /api/vendas`);
 });
