@@ -1,0 +1,31 @@
+CREATE DATABASE pdv;
+USE pdv;
+
+CREATE TABLE usuarios (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  nome VARCHAR(100),
+  email VARCHAR(100) UNIQUE,
+  senha VARCHAR(255)
+);
+
+CREATE TABLE produtos (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  nome VARCHAR(100),
+  preco DECIMAL(10,2),
+  cat VARCHAR(50)
+);
+
+CREATE TABLE vendas (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  total DECIMAL(10,2),
+  metodo_pagamento VARCHAR(20),
+  data TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE venda_itens (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  venda_id INT,
+  produto VARCHAR(100),
+  qtd INT,
+  subtotal DECIMAL(10,2)
+);

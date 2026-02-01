@@ -277,6 +277,52 @@
         </div>
     </div>
 
+<nav class="top-menu">
+  <button onclick="mostrarSecao('pdv')">🛒 PDV</button>
+  <button onclick="mostrarSecao('produtos')">📦 Produtos</button>
+  <button onclick="mostrarSecao('relatorios')">📊 Relatórios</button>
+</nav>
+
+<section id="sec-pdv">
+  <!-- TODO O SEU CÓDIGO ATUAL DO PDV -->
+</section>
+
+<section id="sec-produtos" style="display:none;">
+  <h2>📦 Cadastro de Produtos</h2>
+
+  <div class="caixa-busca">
+    <input class="input-grande" id="nomeProd" placeholder="Nome do produto">
+    <input class="input-grande" id="precoProd" type="number" placeholder="Preço">
+    <input class="input-grande" id="catProd" placeholder="Categoria">
+    <button class="btn-finalizar" onclick="cadastrarProduto()">Salvar</button>
+  </div>
+</section>
+
+<section id="sec-relatorios" style="display:none;">
+  <h2>📊 Relatórios de Vendas</h2>
+
+  <div class="metodos-pgto">
+    <button class="btn-pgto" onclick="carregarRelatorio('dia')">Hoje</button>
+    <button class="btn-pgto" onclick="carregarRelatorio('semana')">Semana</button>
+    <button class="btn-pgto" onclick="carregarRelatorio('mes')">Mês</button>
+  </div>
+
+  <div class="catalogo-grid" id="relatorioResultado"></div>
+</section>
+
+async function carregarRelatorio(tipo) {
+  const res = await fetch(`${API}/relatorios?v=${tipo}`);
+  const dados = await res.json();
+
+  document.getElementById("relatorioResultado").innerHTML = dados.map(v => `
+    <div class="card-produto">
+      <span>${new Date(v.data).toLocaleDateString()}</span>
+      <span class="nome">R$ ${v.total.toFixed(2)}</span>
+      <span class="categoria">${v.metodo_pagamento}</span>
+    </div>
+  `).join('');
+}
+
     <script>
         const API = "http://localhost:3000";
         let bancoProdutos = [];
@@ -342,9 +388,7 @@
             atualizarCarrinho();
             fecharModal();
             
-            // Som de sucesso lúdico (opcional)
-            const audio = new Audio('https://www.soundjay.com/buttons/sounds/button-3.mp3');
-            audio.play().catch(() => {});
+           
         }
 
         // --- Carrinho ---
